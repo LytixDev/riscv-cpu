@@ -23,17 +23,16 @@ class CPU extends MultiIOModule {
   /**
     You need to create the classes for these yourself
     */
-  val IFBarrier  = Module(new IFID).io
-  val IDBarrier  = Module(new IDEX).io
-  val EXBarrier  = Module(new EXMEM).io
-  val MEMBarrier = Module(new MEMWB).io
+  val IFID  = Module(new IFID).io
+  val IDEX  = Module(new IDEX).io
+  val EXMEM  = Module(new EXMEM).io
+  val MEMWB = Module(new MEMWB).io
 
   val IF  = Module(new InstructionFetch)
   val ID  = Module(new InstructionDecode)
   val EX  = Module(new Execute)
   val MEM = Module(new MemoryFetch)
   // val WB  = Module(new Execute) (You may not need this one?)
-
 
   /**
     * Setup. You should not change this code
@@ -58,71 +57,71 @@ class CPU extends MultiIOModule {
     */
 
   // IFID
-  IFBarrier.PCIn := IF.io.PC
-  IFBarrier.instructionIn := IF.io.instruction
-  ID.io.PC := IFBarrier.PCOut
-  ID.io.instruction := IFBarrier.instructionOut
+  IFID.PCIn := IF.io.PC
+  IFID.instructionIn := IF.io.instruction
+  ID.io.PC := IFID.PCOut
+  ID.io.instruction := IFID.instructionOut
 
 
   // IFEX
-  IDBarrier.instructionIn := ID.io.instructionOut
-  IDBarrier.PCIn := ID.io.PCOut
-  IDBarrier.dataAIn := ID.io.dataA
-  IDBarrier.dataBIn := ID.io.dataB
-  IDBarrier.controlSignalsIn := ID.io.controlSignals
-  IDBarrier.immTypeIn := ID.io.immType
-  IDBarrier.ALUopIn := ID.io.ALUop
+  IDEX.instructionIn := ID.io.instructionOut
+  IDEX.PCIn := ID.io.PCOut
+  IDEX.dataAIn := ID.io.dataA
+  IDEX.dataBIn := ID.io.dataB
+  IDEX.controlSignalsIn := ID.io.controlSignals
+  IDEX.immTypeIn := ID.io.immType
+  IDEX.ALUopIn := ID.io.ALUop
 
-  EX.io.instruction := IDBarrier.instructionOut
-  EX.io.PC := IDBarrier.PCOut
-  EX.io.dataA := IDBarrier.dataAOut
-  EX.io.dataB := IDBarrier.dataBOut
-  EX.io.controlSignals := IDBarrier.controlSignalsOut
-  EX.io.immType := IDBarrier.immTypeOut
-  EX.io.ALUop := IDBarrier.ALUopOut
+  EX.io.instruction := IDEX.instructionOut
+  EX.io.PC := IDEX.PCOut
+  EX.io.dataA := IDEX.dataAOut
+  EX.io.dataB := IDEX.dataBOut
+  EX.io.controlSignals := IDEX.controlSignalsOut
+  EX.io.immType := IDEX.immTypeOut
+  EX.io.ALUop := IDEX.ALUopOut
 
 
   // EXMEM
-  EXBarrier.instructionIn := EX.io.instructionOut
-  EXBarrier.dataIn := EX.io.aluResult
-  EXBarrier.dataAIn := EX.io.dataAOut
-  EXBarrier.controlSignalsIn := EX.io.controlSignalsOut
+  EXMEM.instructionIn := EX.io.instructionOut
+  EXMEM.dataAluIn := EX.io.aluResult
+  EXMEM.dataAIn := EX.io.dataAOut
+  EXMEM.controlSignalsIn := EX.io.controlSignalsOut
 
-  MEM.io.instructionIn := EXBarrier.instructionOut
-  MEM.io.controlSignalsIn := EXBarrier.controlSignalsOut
+  MEM.io.instructionIn := EXMEM.instructionOut
+  MEM.io.controlSignalsIn := EXMEM.controlSignalsOut
 
-  MEM.io.dataIn := EXBarrier.dataOut
+  MEM.io.dataIn := EXMEM.dataAluOut
   MEM.io.dataAddress := 0.U
   MEM.io.writeEnable := false.B
 
 
   // MEMWB
-  MEMBarrier.instructionIn := MEM.io.instructionOut
-  MEMBarrier.dataIn := EXBarrier.dataOut
-  MEMBarrier.memReadIn := MEM.io.dataOut
-  MEMBarrier.controlSignalsIn := MEM.io.controlSignalsOut
+  MEMWB.instructionIn := MEM.io.instructionOut
+  MEMWB.dataIn := EXMEM.dataAluOut
+  MEMWB.memReadIn := MEM.io.dataOut
+  MEMWB.controlSignalsIn := MEM.io.controlSignalsOut
 
-  ID.io.writeEnable := MEMBarrier.controlSignalsOut.regWrite
-  when(MEMBarrier.instructionOut.registerRd === 0.U) {
+  ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite
+  when (MEMWB.instructionOut.registerRd === 0.U) {
     ID.io.writeEnable := false.B
   }.otherwise {
-    ID.io.writeEnable := MEMBarrier.controlSignalsOut.regWrite
+    ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite
   }
 
-  ID.io.writeData := MEMBarrier.dataOut
-  ID.io.writeAddress := MEMBarrier.instructionOut.registerRd
+  ID.io.writeData := MEMWB.dataOut
+  ID.io.writeAddress := MEMWB.instructionOut.registerRd
 
   // Memory read and write
-  when (EXBarrier.controlSignalsOut.memRead || EXBarrier.controlSignalsOut.memWrite) {
-    MEM.io.dataAddress := EXBarrier.dataOut
-    MEM.io.writeEnable := EXBarrier.controlSignalsOut.memWrite
+  when (EXMEM.controlSignalsOut.memRead || EXMEM.controlSignalsOut.memWrite) {
+    MEM.io.dataAddress := EXMEM.dataAluOut
+    MEM.io.writeEnable := EXMEM.controlSignalsOut.memWrite
   }
-
-  when (EXBarrier.controlSignalsOut.memWrite) {
-    MEM.io.dataIn := EXBarrier.dataAOut
+  // Use dataA as data to write to memory
+  when (EXMEM.controlSignalsOut.memWrite) {
+    MEM.io.dataIn := EXMEM.dataAOut
   }
-
-  when (MEMBarrier.controlSignalsOut.memRead) {
-    ID.io.writeData := MEMBarrier.memReadOut
+  // Use read data for writing to register
+  when (MEMWB.controlSignalsOut.memRead) {
+    ID.io.writeData := MEMWB.memReadOut
   }
 }

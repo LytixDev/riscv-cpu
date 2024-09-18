@@ -23,14 +23,14 @@ class MEMWB extends Module {
   data := io.dataIn
   io.dataOut := data
 
-  io.memReadOut := io.memReadIn
-
-
   val instruction = Reg(new Instruction)
   instruction := io.instructionIn
+  io.instructionOut := instruction
+
   val controlSignals = Reg(new ControlSignals)
   controlSignals := io.controlSignalsIn
-
-  io.instructionOut := instruction
   io.controlSignalsOut := controlSignals
+
+  // What we read from MEM. Everything else must be delayed since this takes one cycle.
+  io.memReadOut := io.memReadIn
 }
