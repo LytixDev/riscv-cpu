@@ -102,6 +102,7 @@ object ImmFormat {
   val UTYPE  = 3.asUInt(3.W)
   val JTYPE  = 4.asUInt(3.W)
   val SHAMT  = 5.asUInt(3.W)
+  val RTYPE  = 6.asUInt(3.W)
   val DC     = 0.asUInt(3.W)
 }
 

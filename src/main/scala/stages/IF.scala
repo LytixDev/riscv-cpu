@@ -1,4 +1,6 @@
-package FiveStage
+package stages
+
+import FiveStage.{IMEM, IMEMsetupSignals, Instruction}
 import chisel3._
 import chisel3.experimental.MultiIOModule
 
@@ -24,6 +26,7 @@ class InstructionFetch extends MultiIOModule {
   val io = IO(
     new Bundle {
       val PC = Output(UInt())
+      val instruction = Output(new Instruction)
     })
 
   val IMEM = Module(new IMEM)
@@ -45,11 +48,10 @@ class InstructionFetch extends MultiIOModule {
   io.PC := PC
   IMEM.io.instructionAddress := PC
 
-  // PC := PC + 4.U
+  PC := PC + 4.U
 
-  val instruction = Wire(new Instruction)
+  val instruction: Instruction = Wire(new Instruction)
   instruction := IMEM.io.instruction.asTypeOf(new Instruction)
-
 
   /**
     * Setup. You should not change this code.
@@ -58,4 +60,6 @@ class InstructionFetch extends MultiIOModule {
     PC := 0.U
     instruction := Instruction.NOP
   }
+
+  io.instruction := instruction
 }
