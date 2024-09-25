@@ -79,11 +79,11 @@ class Decoder() extends Module {
     AUIPC -> List(Y,         N,       N,        N,       N,    branchType.DC, PC,           imm,       UTYPE,        ALUOps.ADD),
 
     // Jumps
-    // NOTE: For branch instructions, the register comparison is not done in the ALU !
-    //       The ALU is used for calculating the target branch for both branch and jump instructions.
-    JAL   -> List(Y,         N,       N,        N,       Y,    branchType.DC, Op1Select.DC, imm,       JTYPE,     ALUOps.ADD),
+    // NOTE: ALU is used to calculate target branch. Same with branch instructions.
+    JAL   -> List(Y,         N,       N,        N,       Y,    branchType.DC, Op1Select.PC, imm,       JTYPE,     ALUOps.ADD),
     JALR  -> List(Y,         N,       N,        N,       Y,    branchType.DC, rs1,          imm,       ITYPE,     ALUOps.ADD),
     // Branches
+    // NOTE: Register comparison not done in ALU, but in BranchCmp !
     BEQ    -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,         rs2,       BTYPE,      ALUOps.ADD),
     BNE    -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,         rs2,       BTYPE,      ALUOps.ADD),
     BLT    -> List(N,        N,       N,        Y,       N,    branchType.lt,  rs1,         rs2,       BTYPE,      ALUOps.ADD),

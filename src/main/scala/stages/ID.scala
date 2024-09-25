@@ -1,5 +1,6 @@
 package stages
 
+import Chisel.MuxLookup
 import FiveStage._
 import chisel3._
 import chisel3.experimental.MultiIOModule
@@ -34,11 +35,14 @@ class InstructionDecode extends MultiIOModule {
       val PCOut = Output(UInt())
       val dataA = Output(UInt(32.W))
       val dataB = Output(UInt(32.W))
+      val imm = Output(UInt(32.W))
       // Directly forwarded from the Decoder
       val controlSignals = Output(new ControlSignals)
       val immType = Output(UInt(3.W))
       val ALUop = Output(UInt(4.W))
       val branchType = Output(UInt(3.W))
+      val op1Select = Output(UInt(1.W))
+      val op2Select = Output(UInt(1.W))
     }
   )
 
@@ -71,28 +75,19 @@ class InstructionDecode extends MultiIOModule {
   io.branchType := decoder.branchType
   io.immType := decoder.immType
   io.ALUop := decoder.ALUop
+  io.op1Select := decoder.op1Select
+  io.op2Select := decoder.op2Select
+
+  io.imm := MuxLookup(decoder.immType, 0.U(32.W), Array(
+    ImmFormat.ITYPE -> decoder.instruction.immediateIType.asUInt,
+    ImmFormat.STYPE -> decoder.instruction.immediateSType.asUInt,
+    ImmFormat.JTYPE -> decoder.instruction.immediateJType.asUInt,
+    ImmFormat.BTYPE -> decoder.instruction.immediateBType.asUInt,
+    ImmFormat.UTYPE -> decoder.instruction.immediateUType.asUInt,
+    ImmFormat.SHAMT -> decoder.instruction.immediateZType.asUInt,
+    ImmFormat.DC -> 0.U
+  ))
 
   io.dataA := registers.io.readData1
-  // when (decoder.op1Select === Op1Select.PC) {
-  //   io.dataA := io.PC
-  // }
-
   io.dataB := registers.io.readData2
-  // TODO: MuxLookup
-  // Handle the different immediate types
-  when (decoder.immType === ITYPE) {
-    io.dataB := io.instruction.immediateIType.asUInt
-  }
-  when (decoder.immType === STYPE) {
-    io.dataB := io.instruction.immediateSType.asUInt
-  }
-  when (decoder.immType === JTYPE) {
-    io.dataB := io.instruction.immediateJType.asUInt
-  }
-  when (decoder.immType === BTYPE) {
-    io.dataB := io.instruction.immediateBType.asUInt
-  }
-  when (decoder.immType === UTYPE) {
-    io.dataB := io.instruction.immediateUType.asUInt
-  }
 }

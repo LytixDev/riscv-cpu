@@ -36,10 +36,6 @@ class ALU() extends MultiIOModule {
   when (io.immType === BTYPE) {
     op2Final := Cat(Fill(32 - 13, io.op2(12)), io.op2(12, 0)).asUInt()
   }
-  when (io.immType === UTYPE) {
-    // TODO: Already concated?
-    op2Final := (io.op2 << 12).asUInt()
-  }
 
   val ALUopMap = Array(
     ADD    -> (io.op1 + op2Final),
@@ -52,6 +48,8 @@ class ALU() extends MultiIOModule {
     SLTU   -> (io.op1 < op2Final), // Set Less Than Unsigned
     SRL    -> (io.op1 >> op2Final(4,0)), // Shift Right Logical (lower 5 bits of op2)
     SRA    -> (io.op1.asSInt >> op2Final(4,0)).asUInt(), // Shift Right Arithmetic (lower 5 bits of op2)
+    COPY_A -> io.op1,
+    COPY_B -> io.op2,
 
     DC     -> 0.U(32.W) // DC means Don't Care? Idk, but this should be a no op.
   )

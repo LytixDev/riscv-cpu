@@ -8,14 +8,14 @@ class EXMEM extends Module {
     new Bundle{
       val PCIn = Input(UInt())
       val instructionIn = Input(new Instruction)
-      val dataAIn = Input(UInt(32.W))
+      val dataBIn = Input(UInt(32.W))
       val dataAluIn = Input(UInt(32.W))
       val controlSignalsIn = Input(new ControlSignals)
       val branchTakenIn = Input(Bool())
 
       val PCOut = Output(UInt())
       val instructionOut = Output(new Instruction)
-      val dataAOut = Output(UInt(32.W))
+      val dataBOut = Output(UInt(32.W))
       val dataAluOut = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals)
       val branchTakenOut = Output(Bool())
@@ -23,7 +23,7 @@ class EXMEM extends Module {
   )
 
   io.PCOut := io.PCIn
-  io.dataAOut := io.dataAIn
+  io.dataBOut := io.dataBIn
   io.dataAluOut := io.dataAluIn
   io.instructionOut := io.instructionIn
   io.controlSignalsOut := io.controlSignalsIn
