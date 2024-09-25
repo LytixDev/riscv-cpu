@@ -55,9 +55,9 @@ class CPU extends MultiIOModule {
   /**
     TODO: Your code here
     */
-  // IF
-  IF.io.jumpOrBranch := false.B
-  IF.io.newPC := 0.U
+  // TODO: REMOVE?
+  // IF.io.useNewPCControl := false.B
+  // IF.io.newPC := 0.U
 
   // IFID
   IFID.PCIn := IF.io.PC
@@ -66,7 +66,7 @@ class CPU extends MultiIOModule {
   ID.io.instruction := IFID.instructionOut
 
 
-  // IFEX
+  // IDEX
   IDEX.instructionIn := ID.io.instructionOut
   IDEX.PCIn := ID.io.PCOut
   IDEX.dataAIn := ID.io.dataA
@@ -74,6 +74,7 @@ class CPU extends MultiIOModule {
   IDEX.controlSignalsIn := ID.io.controlSignals
   IDEX.immTypeIn := ID.io.immType
   IDEX.ALUopIn := ID.io.ALUop
+  IDEX.branchTypeIn := ID.io.branchType
 
   EX.io.instruction := IDEX.instructionOut
   EX.io.PC := IDEX.PCOut
@@ -82,6 +83,12 @@ class CPU extends MultiIOModule {
   EX.io.controlSignals := IDEX.controlSignalsOut
   EX.io.immType := IDEX.immTypeOut
   EX.io.ALUop := IDEX.ALUopOut
+  EX.io.branchType := IDEX.branchTypeOut
+
+  // For jump and branch instructions, the alu is used to calculate the new target
+  when (IDEX.controlSignalsOut.jump || IDEX.controlSignalsOut.branch) {
+    EX.io.dataA := IDEX.PCOut
+  }
 
 
   // EXMEM
@@ -90,8 +97,10 @@ class CPU extends MultiIOModule {
   EXMEM.dataAluIn := EX.io.aluResult
   EXMEM.dataAIn := IDEX.dataAOut
   EXMEM.controlSignalsIn := EX.io.controlSignalsOut
+  EXMEM.branchTakenIn := EX.io.branchTaken
 
-  IF.io.jumpOrBranch := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
+  // For unconditional jumps and branches that are taken, signal to the IF to use the incoming newPC
+  IF.io.useNewPCControl := EXMEM.controlSignalsOut.jump || EXMEM.branchTakenOut
   IF.io.newPC := EXMEM.dataAluOut
 
   MEM.io.instructionIn := EXMEM.instructionOut

@@ -25,8 +25,8 @@ class InstructionFetch extends MultiIOModule {
     */
   val io = IO(
     new Bundle {
-      val jumpOrBranch = Input(Bool())
       val newPC = Input(UInt())
+      val useNewPCControl = Input(Bool())
 
       val PC = Output(UInt())
       val instruction = Output(new Instruction)
@@ -50,7 +50,7 @@ class InstructionFetch extends MultiIOModule {
     */
   io.PC := PC
 
-  when (io.jumpOrBranch) {
+  when (io.useNewPCControl) {
     PC := io.newPC
   } .otherwise {
     PC := PC + 4.U

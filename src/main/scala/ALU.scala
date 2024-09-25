@@ -1,7 +1,7 @@
 package FiveStage
 import Chisel.{Cat, Fill, MuxLookup}
 import FiveStage.ALUOps.{SLT, _}
-import FiveStage.ImmFormat.{ITYPE, JTYPE, STYPE, BTYPE}
+import FiveStage.ImmFormat.{BTYPE, ITYPE, JTYPE, STYPE, UTYPE}
 import chisel3._
 import chisel3.experimental.MultiIOModule
 
@@ -21,6 +21,7 @@ class ALU() extends MultiIOModule {
   )
 
   // Sign-extend op2 to 32-bit wide wide uint if it is an immediate
+  // TODO: MuxLookup
   val op2Final = Wire(UInt(32.W))
   op2Final := io.op2
   when (io.immType === ITYPE) {
@@ -34,6 +35,10 @@ class ALU() extends MultiIOModule {
   }
   when (io.immType === BTYPE) {
     op2Final := Cat(Fill(32 - 13, io.op2(12)), io.op2(12, 0)).asUInt()
+  }
+  when (io.immType === UTYPE) {
+    // TODO: Already concated?
+    op2Final := (io.op2 << 12).asUInt()
   }
 
   val ALUopMap = Array(

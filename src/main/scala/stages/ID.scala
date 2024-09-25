@@ -3,7 +3,7 @@ package stages
 import FiveStage._
 import chisel3._
 import chisel3.experimental.MultiIOModule
-import FiveStage.ImmFormat.{BTYPE, ITYPE, JTYPE, STYPE}
+import FiveStage.ImmFormat.{BTYPE, ITYPE, JTYPE, STYPE, UTYPE}
 
 
 class InstructionDecode extends MultiIOModule {
@@ -38,7 +38,7 @@ class InstructionDecode extends MultiIOModule {
       val controlSignals = Output(new ControlSignals)
       val immType = Output(UInt(3.W))
       val ALUop = Output(UInt(4.W))
-      // val branchType = Output(UInt(3.W))
+      val branchType = Output(UInt(3.W))
     }
   )
 
@@ -68,19 +68,17 @@ class InstructionDecode extends MultiIOModule {
 
   decoder.instruction := io.instruction
   io.controlSignals := decoder.controlSignals
-  // io.branchType := decoder.branchType // NOTE: ignored for now
+  io.branchType := decoder.branchType
   io.immType := decoder.immType
   io.ALUop := decoder.ALUop
 
   io.dataA := registers.io.readData1
+  // when (decoder.op1Select === Op1Select.PC) {
+  //   io.dataA := io.PC
+  // }
+
   io.dataB := registers.io.readData2
-
-  // When the instruction uses the PC and not a register as op1
-  // TODO: refactor
-  when (decoder.op1Select === Op1Select.PC) {
-    io.dataA := io.PC
-  }
-
+  // TODO: MuxLookup
   // Handle the different immediate types
   when (decoder.immType === ITYPE) {
     io.dataB := io.instruction.immediateIType.asUInt
@@ -93,5 +91,8 @@ class InstructionDecode extends MultiIOModule {
   }
   when (decoder.immType === BTYPE) {
     io.dataB := io.instruction.immediateBType.asUInt
+  }
+  when (decoder.immType === UTYPE) {
+    io.dataB := io.instruction.immediateUType.asUInt
   }
 }

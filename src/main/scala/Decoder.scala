@@ -75,21 +75,21 @@ class Decoder() extends Module {
     SLLI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SLL),
 
     // UTYPE's
-    // LUI   -> List(Y,         N,       N,        N,       N,    branchType.DC, op1Select.DC, imm,       UTYPE,        ALUOps.ADD),
-    // AUIPC -> List(Y,         N,       N,        N,       N,    branchType.DC, op1Select.PC, imm,       UTYPE,        ALUOps.ADD),
+    LUI   -> List(Y,         N,       N,        N,       N,    branchType.DC, Op1Select.DC, imm,       UTYPE,        ALUOps.COPY_B),
+    AUIPC -> List(Y,         N,       N,        N,       N,    branchType.DC, PC,           imm,       UTYPE,        ALUOps.ADD),
 
     // Jumps
     // NOTE: For branch instructions, the register comparison is not done in the ALU !
     //       The ALU is used for calculating the target branch for both branch and jump instructions.
-    JAL   -> List(Y,         N,       N,        N,       Y,    branchType.DC, Op1Select.PC, imm,       JTYPE,     ALUOps.ADD),
+    JAL   -> List(Y,         N,       N,        N,       Y,    branchType.DC, Op1Select.DC, imm,       JTYPE,     ALUOps.ADD),
     JALR  -> List(Y,         N,       N,        N,       Y,    branchType.DC, rs1,          imm,       ITYPE,     ALUOps.ADD),
     // Branches
     BEQ    -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,         rs2,       BTYPE,      ALUOps.ADD),
-    // BNE    -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,         rs2,       BTYPE,      ALUOps.SUB),
-    // BLT    -> List(N,        N,       N,        Y,       N,    branchType.lt,  rs1,         rs2,       BTYPE,      ALUOps.SLT),
-    // BGE    -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,         rs2,       BTYPE,      ALUOps.GTE),
-    // BLTU   -> List(N,        N,       N,        Y,       N,    branchType.ltu, rs1,         rs2,       BTYPE,      ALUOps.SLTU),
-    // BGEU   -> List(N,        N,       N,        Y,       N,    branchType.gteu,rs1,         rs2,       BTYPE,      ALUOps.GTEU),
+    BNE    -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,         rs2,       BTYPE,      ALUOps.ADD),
+    BLT    -> List(N,        N,       N,        Y,       N,    branchType.lt,  rs1,         rs2,       BTYPE,      ALUOps.ADD),
+    BGE    -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,         rs2,       BTYPE,      ALUOps.ADD),
+    BLTU   -> List(N,        N,       N,        Y,       N,    branchType.ltu, rs1,         rs2,       BTYPE,      ALUOps.ADD),
+    BGEU   -> List(N,        N,       N,        Y,       N,    branchType.gteu,rs1,         rs2,       BTYPE,      ALUOps.ADD),
     )
 
   val NOP = List(N, N, N, N, N, branchType.DC, rs1, rs2, ImmFormat.DC, ALUOps.DC)

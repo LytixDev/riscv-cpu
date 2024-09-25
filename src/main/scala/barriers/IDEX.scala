@@ -13,6 +13,7 @@ class IDEX extends Module {
       val controlSignalsIn = Input(new ControlSignals)
       val immTypeIn = Input(UInt(3.W))
       val ALUopIn = Input(UInt(4.W))
+      val branchTypeIn = Input(UInt(3.W))
 
       val instructionOut = Output(new Instruction)
       val PCOut = Output(UInt())
@@ -21,6 +22,7 @@ class IDEX extends Module {
       val controlSignalsOut = Output(new ControlSignals)
       val immTypeOut = Output(UInt(3.W))
       val ALUopOut = Output(UInt(4.W))
+      val branchTypeOut = Output(UInt(3.W))
     }
   )
 
@@ -31,4 +33,5 @@ class IDEX extends Module {
   io.controlSignalsOut := io.controlSignalsIn
   io.immTypeOut := io.immTypeIn
   io.ALUopOut := io.ALUopIn
+  io.branchTypeOut := io.branchTypeIn
 }

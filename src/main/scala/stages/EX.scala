@@ -15,13 +15,26 @@ class Execute extends MultiIOModule {
       val controlSignals = Input(new ControlSignals)
       val immType = Input(UInt(3.W))
       val ALUop = Input(UInt(4.W))
+      val branchType = Input(UInt(3.W))
 
       val instructionOut = Output(new Instruction)
       val PCOut = Output(UInt(32.W))
       val aluResult = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals)
+      val branchTaken = Output(Bool())
     }
   )
+
+  io.branchTaken := false.B
+
+  val branchCmp = Module(new BranchCmp)
+  branchCmp.io.op1 := io.dataA
+  branchCmp.io.op2 := io.dataB
+  branchCmp.io.branchType := io.branchType
+  when (io.controlSignals.branch) {
+      printf("TAKEN??? op1: %d op2: %d res: %d\n", io.dataA, io.dataB, branchCmp.io.branchTaken)
+     io.branchTaken := branchCmp.io.branchTaken
+  }
 
   val alu = Module(new ALU)
   alu.io.op1 := io.dataA
