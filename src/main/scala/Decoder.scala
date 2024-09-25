@@ -47,37 +47,49 @@ class Decoder() extends Module {
   val opcodeMap: Array[(BitPat, List[UInt])] = Array(
 
     // signal      regWrite, memRead, memWrite, branch,  jump, branchType,    Op1Select, Op2Select, ImmSelect,    ALUOp
-    LW     -> List(Y,        Y,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.ADD),
+    LW     -> List(Y,        Y,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.ADD),
 
-    SW     -> List(N,        N,       Y,        N,       N,    branchType.DC, rs1,       imm,       STYPE,        ALUOps.ADD),
+    SW     -> List(N,        N,       Y,        N,       N,    branchType.DC, rs1,          imm,       STYPE,        ALUOps.ADD),
 
-    ADD    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.ADD),
-    SUB    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SUB),
+    ADD    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.ADD),
+    SUB    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SUB),
 
-    /**
-      TODO: Fill in the blanks
-      */
-    AND    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.AND),
-    OR     -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.OR),
-    XOR    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.XOR),
-    SLT    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SLT),
-    SLTU   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SLTU),
-    SRA    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SRA),
-    SRL    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SRL),
-    SLL    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       RTYPE,        ALUOps.SLL),
+    AND    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.AND),
+    OR     -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.OR),
+    XOR    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.XOR),
+    SLT    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SLT),
+    SLTU   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SLTU),
+    SRA    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SRA),
+    SRL    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SRL),
+    SLL    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          rs2,       RTYPE,        ALUOps.SLL),
 
     // ITYPE's
-    ADDI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.ADD),
-    ANDI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.AND),
-    ORI    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.OR),
-    XORI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.XOR),
-    SLTI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.SLT),
-    SLTIU  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.SLTU),
-    SRAI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.SRA),
-    SRLI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.SRL),
-    SLLI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.SLL),
+    ADDI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.ADD),
+    ANDI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.AND),
+    ORI    -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.OR),
+    XORI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.XOR),
+    SLTI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SLT),
+    SLTIU  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SLTU),
+    SRAI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SRA),
+    SRLI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SRL),
+    SLLI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,          imm,       ITYPE,        ALUOps.SLL),
 
-    // TODO: Branch instructions and what not
+    // UTYPE's
+    // LUI   -> List(Y,         N,       N,        N,       N,    branchType.DC, op1Select.DC, imm,       UTYPE,        ALUOps.ADD),
+    // AUIPC -> List(Y,         N,       N,        N,       N,    branchType.DC, op1Select.PC, imm,       UTYPE,        ALUOps.ADD),
+
+    // Jumps
+    // NOTE: For branch instructions, the register comparison is not done in the ALU !
+    //       The ALU is used for calculating the target branch for both branch and jump instructions.
+    JAL   -> List(Y,         N,       N,        N,       Y,    branchType.DC, Op1Select.PC, imm,       JTYPE,     ALUOps.ADD),
+    JALR  -> List(Y,         N,       N,        N,       Y,    branchType.DC, rs1,          imm,       ITYPE,     ALUOps.ADD),
+    // Branches
+    BEQ    -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,         rs2,       BTYPE,      ALUOps.ADD),
+    // BNE    -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,         rs2,       BTYPE,      ALUOps.SUB),
+    // BLT    -> List(N,        N,       N,        Y,       N,    branchType.lt,  rs1,         rs2,       BTYPE,      ALUOps.SLT),
+    // BGE    -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,         rs2,       BTYPE,      ALUOps.GTE),
+    // BLTU   -> List(N,        N,       N,        Y,       N,    branchType.ltu, rs1,         rs2,       BTYPE,      ALUOps.SLTU),
+    // BGEU   -> List(N,        N,       N,        Y,       N,    branchType.gteu,rs1,         rs2,       BTYPE,      ALUOps.GTEU),
     )
 
   val NOP = List(N, N, N, N, N, branchType.DC, rs1, rs2, ImmFormat.DC, ALUOps.DC)

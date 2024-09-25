@@ -18,7 +18,6 @@ class Execute extends MultiIOModule {
 
       val instructionOut = Output(new Instruction)
       val PCOut = Output(UInt(32.W))
-      val dataAOut = Output(UInt(32.W))
       val aluResult = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals)
     }
@@ -34,6 +33,4 @@ class Execute extends MultiIOModule {
   io.PCOut := io.PC
   io.aluResult := alu.io.aluResult
   io.controlSignalsOut := io.controlSignals
-
-  io.dataAOut := io.dataA // NOTE: this doesn't need to here, and we can instead use the one from the IDEX stage
 }

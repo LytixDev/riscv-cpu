@@ -120,6 +120,7 @@ object ALUOps {
   val SRA    = 9.U(4.W)
   val COPY_A = 10.U(4.W)
   val COPY_B = 11.U(4.W)
+  // val JAL    = 11.U(4.W) // TODO: Does this need to be its own ALUop?
 
   val DC     = 15.U(4.W)
 }

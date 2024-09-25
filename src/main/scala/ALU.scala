@@ -1,7 +1,7 @@
 package FiveStage
 import Chisel.{Cat, Fill, MuxLookup}
 import FiveStage.ALUOps.{SLT, _}
-import FiveStage.ImmFormat.{ITYPE, STYPE}
+import FiveStage.ImmFormat.{ITYPE, JTYPE, STYPE, BTYPE}
 import chisel3._
 import chisel3.experimental.MultiIOModule
 
@@ -28,6 +28,12 @@ class ALU() extends MultiIOModule {
   }
   when (io.immType === STYPE) {
     op2Final := Cat(Fill(32 - 7, io.op2(6)), io.op2(6, 0)).asUInt()
+  }
+  when (io.immType === JTYPE) {
+    op2Final := Cat(Fill(32 - 21, io.op2(20)), io.op2(20, 0)).asUInt()
+  }
+  when (io.immType === BTYPE) {
+    op2Final := Cat(Fill(32 - 13, io.op2(12)), io.op2(12, 0)).asUInt()
   }
 
   val ALUopMap = Array(

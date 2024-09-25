@@ -55,6 +55,9 @@ class CPU extends MultiIOModule {
   /**
     TODO: Your code here
     */
+  // IF
+  IF.io.jumpOrBranch := false.B
+  IF.io.newPC := 0.U
 
   // IFID
   IFID.PCIn := IF.io.PC
@@ -82,10 +85,14 @@ class CPU extends MultiIOModule {
 
 
   // EXMEM
+  EXMEM.PCIn := EX.io.PCOut
   EXMEM.instructionIn := EX.io.instructionOut
   EXMEM.dataAluIn := EX.io.aluResult
-  EXMEM.dataAIn := EX.io.dataAOut
+  EXMEM.dataAIn := IDEX.dataAOut
   EXMEM.controlSignalsIn := EX.io.controlSignalsOut
+
+  IF.io.jumpOrBranch := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
+  IF.io.newPC := EXMEM.dataAluOut
 
   MEM.io.instructionIn := EXMEM.instructionOut
   MEM.io.controlSignalsIn := EXMEM.controlSignalsOut
@@ -98,6 +105,12 @@ class CPU extends MultiIOModule {
   // MEMWB
   MEMWB.instructionIn := MEM.io.instructionOut
   MEMWB.dataIn := EXMEM.dataAluOut
+  // TODO: inelegant ?
+  // For jump instructions, the alu result is used to update the PC, while the
+  // data we actually want to write to the given register is the PC + 4.
+  when (EXMEM.controlSignalsOut.jump) {
+    MEMWB.dataIn := EXMEM.PCOut + 4.U
+  }
   MEMWB.memReadIn := MEM.io.dataOut
   MEMWB.controlSignalsIn := MEM.io.controlSignalsOut
 

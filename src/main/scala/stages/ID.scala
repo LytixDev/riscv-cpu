@@ -3,7 +3,7 @@ package stages
 import FiveStage._
 import chisel3._
 import chisel3.experimental.MultiIOModule
-import FiveStage.ImmFormat.{ITYPE, STYPE}
+import FiveStage.ImmFormat.{BTYPE, ITYPE, JTYPE, STYPE}
 
 
 class InstructionDecode extends MultiIOModule {
@@ -75,12 +75,23 @@ class InstructionDecode extends MultiIOModule {
   io.dataA := registers.io.readData1
   io.dataB := registers.io.readData2
 
-  // I-type instructions
+  // When the instruction uses the PC and not a register as op1
+  // TODO: refactor
+  when (decoder.op1Select === Op1Select.PC) {
+    io.dataA := io.PC
+  }
+
+  // Handle the different immediate types
   when (decoder.immType === ITYPE) {
     io.dataB := io.instruction.immediateIType.asUInt
   }
-  // S-type instructions
   when (decoder.immType === STYPE) {
     io.dataB := io.instruction.immediateSType.asUInt
+  }
+  when (decoder.immType === JTYPE) {
+    io.dataB := io.instruction.immediateJType.asUInt
+  }
+  when (decoder.immType === BTYPE) {
+    io.dataB := io.instruction.immediateBType.asUInt
   }
 }
