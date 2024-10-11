@@ -19,18 +19,24 @@ class MEMWB extends Module {
     }
   )
 
-  val data = RegInit(0.U(32.W))
-  data := io.dataAluIn
-  io.dataAluOut := data
-
+  val dataAlu = RegInit(0.U(32.W))
+  dataAlu := io.dataAluIn
   val instruction = Reg(new Instruction)
   instruction := io.instructionIn
-  io.instructionOut := instruction
-
   val controlSignals = Reg(new ControlSignals)
   controlSignals := io.controlSignalsIn
-  io.controlSignalsOut := controlSignals
 
   // What we read from MEM. Everything else must be delayed since this takes one cycle.
   io.memReadOut := io.memReadIn
+
+  // NOTE: Attempt at an optimization: Only stall when we actually performed a memory read
+  when (controlSignals.memRead || io.controlSignalsIn.memRead) {
+    io.dataAluOut := dataAlu
+    io.instructionOut := instruction
+    io.controlSignalsOut := controlSignals
+  } .otherwise {
+    io.dataAluOut := io.dataAluIn
+    io.instructionOut := io.instructionIn
+    io.controlSignalsOut := io.controlSignalsIn
+  }
 }
