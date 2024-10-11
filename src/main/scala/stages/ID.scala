@@ -1,6 +1,6 @@
 package stages
 
-import Chisel.MuxLookup
+import Chisel.{Cat, Fill, MuxLookup}
 import FiveStage._
 import chisel3._
 import chisel3.experimental.MultiIOModule
@@ -25,20 +25,16 @@ class InstructionDecode extends MultiIOModule {
         * TODO: Your code here.
         */
       val instruction = Input(new Instruction)
-      val PC = Input(UInt())
       // From the WB stage
       val writeEnable = Input(Bool())
       val writeAddress = Input(UInt(5.W))
       val writeData = Input(UInt(32.W))
 
-      val instructionOut = Output(new Instruction)
-      val PCOut = Output(UInt())
       val dataA = Output(UInt(32.W))
       val dataB = Output(UInt(32.W))
       val imm = Output(UInt(32.W))
       // Directly forwarded from the Decoder
       val controlSignals = Output(new ControlSignals)
-      val immType = Output(UInt(3.W))
       val ALUop = Output(UInt(4.W))
       val branchType = Output(UInt(3.W))
       val op1Select = Output(UInt(1.W))
@@ -67,22 +63,19 @@ class InstructionDecode extends MultiIOModule {
   registers.io.writeAddress := io.writeAddress
   registers.io.writeData    := io.writeData
 
-  io.instructionOut := io.instruction
-  io.PCOut := io.PC
-
   decoder.instruction := io.instruction
   io.controlSignals := decoder.controlSignals
   io.branchType := decoder.branchType
-  io.immType := decoder.immType
   io.ALUop := decoder.ALUop
   io.op1Select := decoder.op1Select
   io.op2Select := decoder.op2Select
 
+  // Decode and sign-extend immediate to 32-bit wide uint
   io.imm := MuxLookup(decoder.immType, 0.U(32.W), Array(
-    ImmFormat.ITYPE -> decoder.instruction.immediateIType.asUInt,
-    ImmFormat.STYPE -> decoder.instruction.immediateSType.asUInt,
-    ImmFormat.JTYPE -> decoder.instruction.immediateJType.asUInt,
-    ImmFormat.BTYPE -> decoder.instruction.immediateBType.asUInt,
+    ImmFormat.ITYPE -> Cat(Fill(32 - 12, decoder.instruction.immediateIType(11)), decoder.instruction.immediateIType(11, 0)).asUInt,
+    ImmFormat.STYPE -> Cat(Fill(32 - 7, decoder.instruction.immediateSType(6)), decoder.instruction.immediateSType(6, 0)).asUInt,
+    ImmFormat.JTYPE -> Cat(Fill(32 - 21, decoder.instruction.immediateJType(20)), decoder.instruction.immediateJType(20, 0)).asUInt,
+    ImmFormat.BTYPE -> Cat(Fill(32 - 13, decoder.instruction.immediateBType(12)), decoder.instruction.immediateBType(12, 0)).asUInt,
     ImmFormat.UTYPE -> decoder.instruction.immediateUType.asUInt,
     ImmFormat.SHAMT -> decoder.instruction.immediateZType.asUInt,
     ImmFormat.DC -> 0.U

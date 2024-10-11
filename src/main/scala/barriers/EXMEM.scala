@@ -9,8 +9,8 @@ class EXMEM extends Module {
       val PCIn = Input(UInt())
       val instructionIn = Input(new Instruction)
       val dataBIn = Input(UInt(32.W))
-      val dataAluIn = Input(UInt(32.W))
       val controlSignalsIn = Input(new ControlSignals)
+      val dataAluIn = Input(UInt(32.W))
       val branchTakenIn = Input(Bool())
 
       val PCOut = Output(UInt())
