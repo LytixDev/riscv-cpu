@@ -19,7 +19,7 @@ import LogParser._
 
 object Manifest {
 
-  val singleTest = "nico.s"
+  val singleTest = "memoFib.s"
 
   val nopPadded = true
 
