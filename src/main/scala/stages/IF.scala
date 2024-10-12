@@ -53,6 +53,7 @@ class InstructionFetch extends MultiIOModule {
   when (io.useNewPCControl) {
     PC := io.newPC
   } .otherwise {
+    // Always assume branch is NOT taken
     PC := PC + 4.U
   }
 

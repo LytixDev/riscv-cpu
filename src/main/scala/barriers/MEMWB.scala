@@ -29,14 +29,19 @@ class MEMWB extends Module {
   // What we read from MEM. Everything else must be delayed since this takes one cycle.
   io.memReadOut := io.memReadIn
 
+  io.dataAluOut := dataAlu
+  io.instructionOut := instruction
+  io.controlSignalsOut := controlSignals
+
   // NOTE: Attempt at an optimization: Only stall when we actually performed a memory read
-  when (controlSignals.memRead || io.controlSignalsIn.memRead) {
-    io.dataAluOut := dataAlu
-    io.instructionOut := instruction
-    io.controlSignalsOut := controlSignals
-  } .otherwise {
-    io.dataAluOut := io.dataAluIn
-    io.instructionOut := io.instructionIn
-    io.controlSignalsOut := io.controlSignalsIn
-  }
+  //       This used to work with NOP's on, but results in a combinatorial circuit with them turned off.
+  // when (controlSignals.memRead || io.controlSignalsIn.memRead) {
+  //   io.dataAluOut := dataAlu
+  //   io.instructionOut := instruction
+  //   io.controlSignalsOut := controlSignals
+  // } .otherwise {
+  //   io.dataAluOut := io.dataAluIn
+  //   io.instructionOut := io.instructionIn
+  //   io.controlSignalsOut := io.controlSignalsIn
+  // }
 }

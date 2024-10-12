@@ -75,6 +75,7 @@ class CPU extends MultiIOModule {
   EX.io.op1Select := IDEX.op1SelectOut
   EX.io.op2Select := IDEX.op2SelectOut
   EX.io.PC := IDEX.PCOut
+  EX.io.instruction := IDEX.instructionOut
   EX.io.dataA := IDEX.dataAOut
   EX.io.dataB := IDEX.dataBOut
   EX.io.imm := IDEX.immOut
@@ -84,12 +85,13 @@ class CPU extends MultiIOModule {
   // EXMEM Barrier
   EXMEM.PCIn := IDEX.PCOut
   EXMEM.instructionIn := IDEX.instructionOut
-  EXMEM.dataBIn := IDEX.dataBOut
+  EXMEM.dataBIn := EX.io.dataBOut
   EXMEM.controlSignalsIn := IDEX.controlSignalsOut
   EXMEM.dataAluIn := EX.io.aluResult
   EXMEM.branchTakenIn := EX.io.branchTaken
   // Instruction Fetch Extra
   // For unconditional jumps and branches that are taken, signal to the IF to use the incoming newPC
+  // TODO: if useNewPCControl then we have speculative work we need to flush somehow
   IF.io.useNewPCControl := EXMEM.controlSignalsOut.jump || EXMEM.branchTakenOut
   IF.io.newPC := EXMEM.dataAluOut
   // Memory Stage
@@ -100,6 +102,13 @@ class CPU extends MultiIOModule {
     MEM.io.dataIn := EXMEM.dataBOut
   }
   // MEMWB Barrier
+  // Forwarded from to Execute stage
+  EX.io.registerRd := MEMWB.instructionOut.registerRd
+  EX.io.unwrittenData := MEMWB.dataAluOut
+  when (MEMWB.controlSignalsOut.memRead) {
+    EX.io.unwrittenData := MEMWB.memReadOut
+  }
+
   MEMWB.memReadIn := MEM.io.dataOut // What we read from memory
   MEMWB.instructionIn := EXMEM.instructionOut
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
