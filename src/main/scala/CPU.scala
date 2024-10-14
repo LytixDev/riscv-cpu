@@ -110,6 +110,10 @@ class CPU extends MultiIOModule {
   // MEMWB Barrier
   // Forwarded to Execute stage
   EX.io.registerRd := MEMWB.instructionOut.registerRd
+  // NOTE: Store instructions use registerRd as to hold data the memory address
+  when (MEMWB.controlSignalsOut.memWrite) {
+    EX.io.registerRd := 0.U
+  }
   EX.io.forwardedInvalidated := MEMWB.invalidatedOut
   EX.io.unwrittenData := MEMWB.dataAluOut
   when (MEMWB.controlSignalsOut.memRead) {

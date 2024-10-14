@@ -21,8 +21,7 @@ class DMEM extends MultiIOModule {
     new Bundle {
       val writeEnable = Input(Bool())
       val dataIn      = Input(UInt(32.W))
-      val dataAddress = Input(UInt(12.W)) // 32.W
-
+      val dataAddress = Input(UInt(12.W)) // NOTE: was originally UInt(12.W)
       val dataOut     = Output(UInt(32.W))
     })
 
