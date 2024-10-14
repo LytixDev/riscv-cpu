@@ -58,8 +58,10 @@ class CPU extends MultiIOModule {
   // IFID Barrier
   IFID.PCIn := IF.io.PC
   IFID.instructionIn := IF.io.instruction
+
   // Instruction Decode Stage
   ID.io.instruction := IFID.instructionOut
+
   // IDEX Barrier
   IDEX.instructionIn := IFID.instructionOut
   IDEX.PCIn := IFID.PCOut
@@ -71,6 +73,7 @@ class CPU extends MultiIOModule {
   IDEX.branchTypeIn := ID.io.branchType
   IDEX.op1SelectIn := ID.io.op1Select
   IDEX.op2SelectIn := ID.io.op2Select
+
   // Execute Stage
   EX.io.op1Select := IDEX.op1SelectOut
   EX.io.op2Select := IDEX.op2SelectOut
@@ -82,37 +85,44 @@ class CPU extends MultiIOModule {
   EX.io.controlSignals := IDEX.controlSignalsOut
   EX.io.ALUop := IDEX.ALUopOut
   EX.io.branchType := IDEX.branchTypeOut
+
   // EXMEM Barrier
   EXMEM.PCIn := IDEX.PCOut
   EXMEM.instructionIn := IDEX.instructionOut
   EXMEM.dataBIn := EX.io.dataBOut
   EXMEM.controlSignalsIn := IDEX.controlSignalsOut
   EXMEM.dataAluIn := EX.io.aluResult
-  EXMEM.branchTakenIn := EX.io.branchTaken
+  // If instruction in MEMWB was taken, the current one in execute is invalid, and if it was a branch, we must ignore its side effect
+  EXMEM.branchTakenOrJumpIn := EX.io.branchTakenOrJump && !EXMEM.invalidatedIn
   // Instruction Fetch Extra
   // For unconditional jumps and branches that are taken, signal to the IF to use the incoming newPC
-  // TODO: if useNewPCControl then we have speculative work we need to flush somehow
-  IF.io.useNewPCControl := EXMEM.controlSignalsOut.jump || EXMEM.branchTakenOut
+  IF.io.useNewPCControl := EXMEM.branchTakenOrJumpOut
   IF.io.newPC := EXMEM.dataAluOut
+
   // Memory Stage
   MEM.io.dataAddress := EXMEM.dataAluOut
-  MEM.io.writeEnable := EXMEM.controlSignalsOut.memWrite
+  MEM.io.writeEnable := EXMEM.controlSignalsOut.memWrite && !EXMEM.invalidatedOut
   MEM.io.dataIn := EXMEM.dataAluOut
   when (EXMEM.controlSignalsOut.memWrite) {
     MEM.io.dataIn := EXMEM.dataBOut
   }
+
   // MEMWB Barrier
-  // Forwarded from to Execute stage
+  // Forwarded to Execute stage
   EX.io.registerRd := MEMWB.instructionOut.registerRd
+  EX.io.forwardedInvalidated := MEMWB.invalidatedOut
   EX.io.unwrittenData := MEMWB.dataAluOut
   when (MEMWB.controlSignalsOut.memRead) {
     EX.io.unwrittenData := MEMWB.memReadOut
   }
-
+  // If instruction in MEMWB barrier was taken, then we need to invalidate current instruction in EXMEM barrier
+  EXMEM.invalidatedIn := MEMWB.branchTakenOrJumpOut
   MEMWB.memReadIn := MEM.io.dataOut // What we read from memory
   MEMWB.instructionIn := EXMEM.instructionOut
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
   MEMWB.dataAluIn := EXMEM.dataAluOut
+  MEMWB.branchTakenOrJumpIn := EXMEM.branchTakenOrJumpOut
+  MEMWB.invalidatedIn := EXMEM.invalidatedOut
   // For jump instructions, the alu result is used to update the PC, while the
   // data we actually want to write to the given register is the old PC + 4.
   when (EXMEM.controlSignalsOut.jump) {
@@ -126,5 +136,5 @@ class CPU extends MultiIOModule {
     ID.io.writeData := MEMWB.memReadOut
   }
   // Register write
-  ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite
+  ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite && !MEMWB.invalidatedOut
 }

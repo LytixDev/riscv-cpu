@@ -20,26 +20,29 @@ class Execute extends MultiIOModule {
       val op2Select = Input(UInt(1.W))
       // Forward from MEMWB Barrier
       val registerRd = Input(UInt(5.W)) // The register with unwritten data
-      val unwrittenData = Input(UInt(32.W)) // Unwritted data
+      val unwrittenData = Input(UInt(32.W)) // Unwritten data
+      val forwardedInvalidated = Input(Bool())
 
       val aluResult = Output(UInt(32.W))
-      val branchTaken = Output(Bool())
+      val branchTakenOrJump = Output(Bool()) // If true then we later need to invalidate instructions in the pipeline
       val dataBOut = Output(UInt(32.W)) // If dataB is stale we update it here and need to propagate that
     }
   )
   // Branch compare module
   val branchCmp = Module(new BranchCmp)
-  io.branchTaken := false.B
+  io.branchTakenOrJump := io.controlSignals.jump
 
   val dataA = Wire(UInt(32.W))
   val dataB = Wire(UInt(32.W))
   dataA := io.dataA
   dataB := io.dataB
-  // Forward if data is stale
-  when (io.instruction.registerRs1 === io.registerRd) {
+  // Forward if data is stale.
+  // NOTE: Zero register should always be zero. Instructions that don't write will get registerRd of 0,
+  //       so we must ignore these types of forwards.
+  when (!io.forwardedInvalidated && io.instruction.registerRs1 === io.registerRd && io.registerRd > 0.U) {
     dataA := io.unwrittenData
   }
-  when (io.instruction.registerRs2 === io.registerRd) {
+  when (!io.forwardedInvalidated && io.instruction.registerRs2 === io.registerRd && io.registerRd > 0.U) {
     dataB := io.unwrittenData
   }
   io.dataBOut := dataB
@@ -48,7 +51,7 @@ class Execute extends MultiIOModule {
   branchCmp.io.op2 := dataB
   branchCmp.io.branchType := io.branchType
   when (io.controlSignals.branch) {
-    io.branchTaken := branchCmp.io.branchTaken
+    io.branchTakenOrJump := branchCmp.io.branchTaken || io.controlSignals.jump
   }
 
   val alu = Module(new ALU)

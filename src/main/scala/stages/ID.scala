@@ -70,14 +70,17 @@ class InstructionDecode extends MultiIOModule {
   io.op1Select := decoder.op1Select
   io.op2Select := decoder.op2Select
 
+
+  val a = io.instruction.immediateBType.asUInt()
+
   // Decode and sign-extend immediate to 32-bit wide uint
   io.imm := MuxLookup(decoder.immType, 0.U(32.W), Array(
     ImmFormat.ITYPE -> Cat(Fill(32 - 12, decoder.instruction.immediateIType(11)), decoder.instruction.immediateIType(11, 0)).asUInt,
     ImmFormat.STYPE -> Cat(Fill(32 - 7, decoder.instruction.immediateSType(6)), decoder.instruction.immediateSType(6, 0)).asUInt,
     ImmFormat.JTYPE -> Cat(Fill(32 - 21, decoder.instruction.immediateJType(20)), decoder.instruction.immediateJType(20, 0)).asUInt,
     ImmFormat.BTYPE -> Cat(Fill(32 - 13, decoder.instruction.immediateBType(12)), decoder.instruction.immediateBType(12, 0)).asUInt,
-    ImmFormat.UTYPE -> decoder.instruction.immediateUType.asUInt,
-    ImmFormat.SHAMT -> decoder.instruction.immediateZType.asUInt,
+    ImmFormat.UTYPE -> io.instruction.immediateUType.asUInt,
+    ImmFormat.SHAMT -> io.instruction.immediateZType.asUInt,
     ImmFormat.DC -> 0.U
   ))
 
