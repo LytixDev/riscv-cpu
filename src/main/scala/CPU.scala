@@ -55,6 +55,18 @@ class CPU extends MultiIOModule {
   /**
     TODO: Your code here
     */
+
+  // Branch prediction metrics
+  // val totalBranches = RegInit(0.U(32.W))
+  // val totalMispredicts = RegInit(0.U(32.W))
+  // when (EX.io.controlSignals.branch) {
+  //   totalBranches := totalBranches + 1.U
+  //   when (EX.io.branchMispredict) {
+  //     totalMispredicts := totalMispredicts + 1.U
+  //   }
+  // }
+  // printf("mispredicts: [%d] / branches: [%d]\n", totalMispredicts, totalBranches)
+
   // IFID Barrier
   IFID.PCIn := IF.io.PC
   IFID.instructionIn := IF.io.instruction
@@ -65,6 +77,7 @@ class CPU extends MultiIOModule {
   // IDEX Barrier
   IDEX.instructionIn := IFID.instructionOut
   IDEX.PCIn := IFID.PCOut
+  IDEX.PCNextIn := IFID.PCNextOut
   IDEX.dataAIn := ID.io.dataA
   IDEX.dataBIn := ID.io.dataB
   IDEX.immIn := ID.io.imm
@@ -78,6 +91,7 @@ class CPU extends MultiIOModule {
   EX.io.op1Select := IDEX.op1SelectOut
   EX.io.op2Select := IDEX.op2SelectOut
   EX.io.PC := IDEX.PCOut
+  EX.io.PCNext := IDEX.PCNextOut
   EX.io.instruction := IDEX.instructionOut
   EX.io.dataA := IDEX.dataAOut
   EX.io.dataB := IDEX.dataBOut
@@ -93,11 +107,18 @@ class CPU extends MultiIOModule {
   EXMEM.controlSignalsIn := IDEX.controlSignalsOut
   EXMEM.dataAluIn := EX.io.aluResult
   // If instruction in MEMWB was taken, the current one in execute is invalid, and if it was a branch, we must ignore its side effect
-  EXMEM.branchTakenOrJumpIn := EX.io.branchTakenOrJump && !EXMEM.invalidatedIn
+  EXMEM.branchMispredictIn := EX.io.branchMispredict && !EXMEM.invalidatedIn
+  EXMEM.branchtakenIn := EX.io.branchTaken && !EXMEM.invalidatedIn
   // Instruction Fetch Extra
-  // For unconditional jumps and branches that are taken, signal to the IF to use the incoming newPC
-  IF.io.useNewPCControl := EXMEM.branchTakenOrJumpOut
+  // For branches and jumps that are mispredicted, signal to the IF to use the incoming newPC
+  IF.io.useNewPCControl := EXMEM.branchMispredictOut
   IF.io.newPC := EXMEM.dataAluOut
+  // We only update a BTB entry when we mispredict a branch address which is actually taken
+  // When we mispredict a branch address that is not taken, it is uninteresting to fill the BTB with PC + 4.
+  IF.io.updateBTB := EXMEM.branchMispredictOut && EXMEM.branchtakenOut
+  IF.io.addressThatGeneratedNewPC := IDEX.PCOut
+  IF.io.updatePredictor := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
+  IF.io.wasTaken := EXMEM.branchtakenOut
 
   // Memory Stage
   MEM.io.dataAddress := EXMEM.dataAluOut
@@ -120,14 +141,14 @@ class CPU extends MultiIOModule {
     EX.io.unwrittenData := MEMWB.memReadOut
   }
   // If instruction in MEMWB barrier was taken, then we need to invalidate current instruction in EXMEM barrier
-  EXMEM.invalidatedIn := MEMWB.branchTakenOrJumpOut
+  EXMEM.invalidatedIn := MEMWB.branchMispredictOut
   MEMWB.memReadIn := MEM.io.dataOut // What we read from memory
   MEMWB.instructionIn := EXMEM.instructionOut
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
   MEMWB.dataAluIn := EXMEM.dataAluOut
-  MEMWB.branchTakenOrJumpIn := EXMEM.branchTakenOrJumpOut
+  MEMWB.branchMispredictIn := EXMEM.branchMispredictOut
   MEMWB.invalidatedIn := EXMEM.invalidatedOut
-  // For jump instructions, the alu result is used to update the PC, while the
+  // For jump instructions, the alu result is used to update the new PC, while the
   // data we actually want to write to the given register is the old PC + 4.
   when (EXMEM.controlSignalsOut.jump) {
     MEMWB.dataAluIn := EXMEM.PCOut + 4.U

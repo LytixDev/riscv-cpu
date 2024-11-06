@@ -7,7 +7,8 @@ class IDEX extends Module {
   val io = IO(
     new Bundle{
       val instructionIn = Input(new Instruction)
-      val PCIn = Input(UInt())
+      val PCIn = Input(UInt(32.W))
+      val PCNextIn = Input(UInt(32.W))
       val dataAIn = Input(UInt(32.W))
       val dataBIn = Input(UInt(32.W))
       val immIn = Input(UInt(32.W))
@@ -18,7 +19,8 @@ class IDEX extends Module {
       val op2SelectIn = Input(UInt(1.W))
 
       val instructionOut = Output(new Instruction)
-      val PCOut = Output(UInt())
+      val PCOut = Output(UInt(32.W))
+      val PCNextOut = Output(UInt(32.W))
       val dataAOut = Output(UInt(32.W))
       val dataBOut = Output(UInt(32.W))
       val immOut = Output(UInt(32.W))
@@ -32,6 +34,7 @@ class IDEX extends Module {
 
   io.instructionOut := io.instructionIn
   io.PCOut := io.PCIn
+  io.PCNextOut := io.PCNextIn
   io.dataAOut := io.dataAIn
   io.dataBOut := io.dataBIn
   io.immOut := io.immIn

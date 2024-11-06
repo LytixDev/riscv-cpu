@@ -1,6 +1,6 @@
 package stages
 
-import FiveStage.{IMEM, IMEMsetupSignals, Instruction}
+import FiveStage.{BTB, BimodalPredictor, IMEM, IMEMsetupSignals, Instruction}
 import chisel3._
 import chisel3.experimental.MultiIOModule
 
@@ -16,25 +16,36 @@ class InstructionFetch extends MultiIOModule {
 
 
   /**
-    * TODO: Add input signals for handling events such as jumps
-
-    * TODO: Add output signal for the instruction. 
     * The instruction is of type Bundle, which means that you must
     * use the same syntax used in the testHarness for IMEM setup signals
     * further up.
     */
   val io = IO(
     new Bundle {
-      val newPC = Input(UInt())
+      val newPC = Input(UInt(32.W)) // From the execute stage
       val useNewPCControl = Input(Bool())
+      // Used to update the BTB and Predictor
+      val addressThatGeneratedNewPC = Input(UInt(32.W)) // Used as input to update BTB and predictor
+      val updateBTB = Input(Bool())
+      val updatePredictor = Input(Bool())
+      val wasTaken = Input(Bool())
 
-      val PC = Output(UInt())
+      val PC = Output(UInt(32.W))
       val instruction = Output(new Instruction)
     })
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
 
+  val BTB = Module(new BTB)
+  BTB.io.inputAddressIn := PC
+  BTB.io.doLookup := true.B
+  BTB.io.storeAddressIn := 0.U // Lookup mode so doesn't matter
+
+  val bimodalPredictor = Module(new BimodalPredictor)
+  bimodalPredictor.io.inputAddress := PC
+  bimodalPredictor.io.inputWasTaken := io.wasTaken
+  bimodalPredictor.io.updateStateControl := false.B
 
   /**
     * Setup. You should not change this code
@@ -43,18 +54,31 @@ class InstructionFetch extends MultiIOModule {
   testHarness.PC := IMEM.testHarness.requestedAddress
 
 
-  /**
-    * TODO: Your code here.
-    * 
-    * You should expand on or rewrite the code below.
-    */
   io.PC := PC
 
+  // Update BTB logic
+  when (io.updateBTB) {
+    // printf("Updated BTB at %d with %d\n", io.addressThatGeneratedNewPC, io.newPC)
+    BTB.io.doLookup := false.B
+    BTB.io.inputAddressIn := io.addressThatGeneratedNewPC
+    BTB.io.storeAddressIn := io.newPC
+  }
+
+  // Update predictor logic
+  when (io.updatePredictor) {
+    bimodalPredictor.io.inputAddress := io.addressThatGeneratedNewPC
+    bimodalPredictor.io.updateStateControl := true.B
+  }
+
+  // Figure out what instruction to fetch next
   when (io.useNewPCControl) {
     PC := io.newPC
   } .otherwise {
-    // Always assume branch is NOT taken
-    PC := PC + 4.U
+    when (bimodalPredictor.io.predictTaken && BTB.io.hit) {
+      PC := BTB.io.targetAddress
+    } .otherwise {
+      PC := PC + 4.U
+    }
   }
 
   IMEM.io.instructionAddress := PC

@@ -45,7 +45,6 @@ class InstructionDecode extends MultiIOModule {
   val registers = Module(new Registers)
   val decoder   = Module(new Decoder).io
 
-
   /**
     * Setup. You should not change this code
     */

@@ -9,6 +9,7 @@ class Execute extends MultiIOModule {
   val io = IO(
     new Bundle{
       val PC = Input(UInt(32.W))
+      val PCNext = Input(UInt(32.W))
       val instruction = Input(new Instruction)
       val dataA = Input(UInt(32.W))
       val dataB = Input(UInt(32.W))
@@ -24,13 +25,14 @@ class Execute extends MultiIOModule {
       val forwardedInvalidated = Input(Bool())
 
       val aluResult = Output(UInt(32.W))
-      val branchTakenOrJump = Output(Bool()) // If true then we later need to invalidate instructions in the pipeline
       val dataBOut = Output(UInt(32.W)) // If dataB is stale we update it here and need to propagate that
+      val branchMispredict = Output(Bool())
+      val branchTaken = Output(Bool())
     }
   )
+
   // Branch compare module
   val branchCmp = Module(new BranchCmp)
-  io.branchTakenOrJump := io.controlSignals.jump
 
   val dataA = Wire(UInt(32.W))
   val dataB = Wire(UInt(32.W))
@@ -50,9 +52,8 @@ class Execute extends MultiIOModule {
   branchCmp.io.op1 := dataA
   branchCmp.io.op2 := dataB
   branchCmp.io.branchType := io.branchType
-  when (io.controlSignals.branch) {
-    io.branchTakenOrJump := branchCmp.io.branchTaken || io.controlSignals.jump
-  }
+
+  io.branchTaken := branchCmp.io.branchTaken || io.controlSignals.jump
 
   val alu = Module(new ALU)
   alu.io.aluOp := io.ALUop
@@ -67,4 +68,22 @@ class Execute extends MultiIOModule {
   }
 
   io.aluResult := alu.io.aluResult
+
+
+  /*
+   * Process for detecting a branch mispredict:
+   *  If jump or branch is computed taken: ALU result != nextPC => mispredict
+   *  If branch is computed not taken:         PC + 4 != nextPC => mispredict
+   */
+  io.branchMispredict := false.B
+  when (io.controlSignals.jump || (io.controlSignals.branch && branchCmp.io.branchTaken)) {
+    /* Branch and jumps we know SHOULD be taken */
+    io.branchMispredict := alu.io.aluResult =/= io.PCNext
+  } .elsewhen (io.controlSignals.branch) {
+    /* Branch we now should NOT be taken */
+    io.branchMispredict := (io.PC + 4.U) =/= io.PCNext
+    when (io.branchMispredict) {
+      io.aluResult := io.PC + 4.U // Hacky solution so we can update the PC to the correct address
+    }
+  }
 }
