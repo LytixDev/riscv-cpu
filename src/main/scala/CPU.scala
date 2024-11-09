@@ -1,6 +1,6 @@
 package FiveStage
 
-import barriers.{EXMEM, IDEX, IFID, MEMWB}
+import barriers.{EXMEM, IDEX, IFID, MEMWB, WBEND}
 import chisel3._
 import chisel3.core.Input
 import chisel3.experimental.MultiIOModule
@@ -27,6 +27,7 @@ class CPU extends MultiIOModule {
   val IDEX  = Module(new IDEX).io
   val EXMEM  = Module(new EXMEM).io
   val MEMWB = Module(new MEMWB).io
+  val WBEND = Module(new WBEND).io
 
   val IF  = Module(new InstructionFetch)
   val ID  = Module(new InstructionDecode)
@@ -116,7 +117,7 @@ class CPU extends MultiIOModule {
   // We only update a BTB entry when we mispredict a branch address which is actually taken
   // When we mispredict a branch address that is not taken, it is uninteresting to fill the BTB with PC + 4.
   IF.io.updateBTB := EXMEM.branchMispredictOut && EXMEM.branchtakenOut
-  IF.io.addressThatGeneratedNewPC := IDEX.PCOut
+  IF.io.addressThatGeneratedNewPC := EXMEM.PCOut
   IF.io.updatePredictor := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
   IF.io.wasTaken := EXMEM.branchtakenOut
 
@@ -129,17 +130,6 @@ class CPU extends MultiIOModule {
   }
 
   // MEMWB Barrier
-  // Forwarded to Execute stage
-  EX.io.registerRd := MEMWB.instructionOut.registerRd
-  // NOTE: Store instructions use registerRd as to hold data the memory address
-  when (MEMWB.controlSignalsOut.memWrite) {
-    EX.io.registerRd := 0.U
-  }
-  EX.io.forwardedInvalidated := MEMWB.invalidatedOut
-  EX.io.unwrittenData := MEMWB.dataAluOut
-  when (MEMWB.controlSignalsOut.memRead) {
-    EX.io.unwrittenData := MEMWB.memReadOut
-  }
   // If instruction in MEMWB barrier was taken, then we need to invalidate current instruction in EXMEM barrier
   EXMEM.invalidatedIn := MEMWB.branchMispredictOut
   MEMWB.memReadIn := MEM.io.dataOut // What we read from memory
@@ -162,4 +152,42 @@ class CPU extends MultiIOModule {
   }
   // Register write
   ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite && !MEMWB.invalidatedOut
+
+  // WBEND Barrier
+  WBEND.registerIn := MEMWB.instructionOut.registerRd
+  WBEND.dataUnwrittenIn := MEMWB.dataAluOut
+  WBEND.invalidatedIn := MEMWB.invalidatedOut
+  // NOTE: Store instructions use registerRd to hold the memory address
+  when (MEMWB.controlSignalsOut.memWrite) {
+    WBEND.registerIn := 0.U // Zero register forwards are ignored
+  }
+  when (MEMWB.controlSignalsOut.memRead) {
+    WBEND.dataUnwrittenIn := MEMWB.memReadOut
+  }
+
+  // Forwards to Execute stage
+  // EXMEM to EX
+  EX.io.exmemRegister := EXMEM.instructionOut.registerRd
+  EX.io.exmemInvalidated := EXMEM.invalidatedOut
+  EX.io.exmemUnwritten := EXMEM.dataAluOut
+  // NOTE: Store instructions use registerRd to hold the memory address
+  when (EXMEM.controlSignalsOut.memWrite) {
+    EX.io.exmemRegister := 0.U // Zero register forwards are ignored
+  }
+  // MEMWB to EX
+  EX.io.memwbRegister := MEMWB.instructionOut.registerRd
+  EX.io.memwbInvalidated := MEMWB.invalidatedOut
+  EX.io.memwbUnwritten := MEMWB.dataAluOut
+  // NOTE: Store instructions use registerRd to hold the memory address
+  when (MEMWB.controlSignalsOut.memWrite) {
+    EX.io.memwbRegister := 0.U // Zero register forwards are ignored
+  }
+  when (MEMWB.controlSignalsOut.memRead) {
+     EX.io.memwbUnwritten := MEMWB.memReadOut
+  }
+  // WB to EX
+  EX.io.wbendRegister := WBEND.registerOut
+  EX.io.wbendInvalidated := WBEND.invalidatedOut
+  EX.io.wbendUnwritten := WBEND.dataUnwrittenOut
+
 }

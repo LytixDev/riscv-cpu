@@ -26,12 +26,12 @@ class EXMEM extends Module {
     }
   )
 
-  io.PCOut := io.PCIn
-  io.dataBOut := io.dataBIn
-  io.dataAluOut := io.dataAluIn
-  io.instructionOut := io.instructionIn
-  io.controlSignalsOut := io.controlSignalsIn
-  io.branchMispredictOut := io.branchMispredictIn
-  io.branchtakenOut := io.branchtakenIn
-  io.invalidatedOut := io.invalidatedIn
+  io.PCOut := RegNext(io.PCIn)
+  io.dataBOut := RegNext(io.dataBIn)
+  io.dataAluOut := RegNext(io.dataAluIn)
+  io.instructionOut := RegNext(io.instructionIn)
+  io.controlSignalsOut := RegNext(io.controlSignalsIn)
+  io.branchMispredictOut := RegNext(io.branchMispredictIn)
+  io.branchtakenOut := RegNext(io.branchtakenIn)
+  io.invalidatedOut := RegNext(io.invalidatedIn)
 }

@@ -23,35 +23,12 @@ class MEMWB extends Module {
     }
   )
 
-  val dataAlu = RegInit(0.U(32.W))
-  dataAlu := io.dataAluIn
-  val instruction = Reg(new Instruction)
-  instruction := io.instructionIn
-  val controlSignals = Reg(new ControlSignals)
-  controlSignals := io.controlSignalsIn
-  val branchMispredict = Reg(Bool())
-  branchMispredict := io.branchMispredictIn
-  val invalidated = Reg(Bool())
-  invalidated := io.invalidatedIn
-
-  // What we read from MEM. Everything else must be delayed since this takes one cycle.
+  // Reading latency is one cycle already
   io.memReadOut := io.memReadIn
 
-  io.dataAluOut := dataAlu
-  io.instructionOut := instruction
-  io.controlSignalsOut := controlSignals
-  io.branchMispredictOut := branchMispredict
-  io.invalidatedOut := invalidated
-
-  // NOTE: Attempt at an optimization: Only stall when we actually performed a memory read
-  //       This used to work with NOP's on, but results in a combinatorial circuit with them turned off.
-  // when (controlSignals.memRead || io.controlSignalsIn.memRead) {
-  //   io.dataAluOut := dataAlu
-  //   io.instructionOut := instruction
-  //   io.controlSignalsOut := controlSignals
-  // } .otherwise {
-  //   io.dataAluOut := io.dataAluIn
-  //   io.instructionOut := io.instructionIn
-  //   io.controlSignalsOut := io.controlSignalsIn
-  // }
+  io.instructionOut := RegNext(io.instructionIn)
+  io.dataAluOut := RegNext(io.dataAluIn)
+  io.controlSignalsOut := RegNext(io.controlSignalsIn)
+  io.branchMispredictOut := RegNext(io.branchMispredictIn)
+  io.invalidatedOut := RegNext(io.invalidatedIn)
 }

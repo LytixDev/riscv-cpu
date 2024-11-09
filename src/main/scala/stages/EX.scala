@@ -19,10 +19,18 @@ class Execute extends MultiIOModule {
       val branchType = Input(UInt(3.W))
       val op1Select = Input(UInt(1.W))
       val op2Select = Input(UInt(1.W))
-      // Forward from MEMWB Barrier
-      val registerRd = Input(UInt(5.W)) // The register with unwritten data
-      val unwrittenData = Input(UInt(32.W)) // Unwritten data
-      val forwardedInvalidated = Input(Bool())
+      // Forward from EXMEM
+      val exmemRegister = Input(UInt(5.W)) // The register with unwritten data
+      val exmemUnwritten = Input(UInt(32.W))
+      val exmemInvalidated = Input(Bool())
+      // Forward from MEMWB
+      val memwbRegister = Input(UInt(5.W))
+      val memwbUnwritten = Input(UInt(32.W))
+      val memwbInvalidated = Input(Bool())
+      // Forward from WBEND
+      val wbendRegister = Input(UInt(5.W))
+      val wbendUnwritten = Input(UInt(32.W))
+      val wbendInvalidated = Input(Bool())
 
       val aluResult = Output(UInt(32.W))
       val dataBOut = Output(UInt(32.W)) // If dataB is stale we update it here and need to propagate that
@@ -38,16 +46,31 @@ class Execute extends MultiIOModule {
   val dataB = Wire(UInt(32.W))
   dataA := io.dataA
   dataB := io.dataB
-  // Forward if data is stale.
+  io.dataBOut := dataB
+
+  // Logic for choosing the correct forwarded values.
   // NOTE: Zero register should always be zero. Instructions that don't write will get registerRd of 0,
   //       so we must ignore these types of forwards.
-  when (!io.forwardedInvalidated && io.instruction.registerRs1 === io.registerRd && io.registerRd > 0.U) {
-    dataA := io.unwrittenData
+  // We first check the oldest value in the pipeline. This means if we get forwarded two values for the same register
+  // we always just the newest one
+  when (!io.wbendInvalidated && io.instruction.registerRs1 === io.wbendRegister && io.wbendRegister > 0.U) {
+    dataA := io.wbendUnwritten
   }
-  when (!io.forwardedInvalidated && io.instruction.registerRs2 === io.registerRd && io.registerRd > 0.U) {
-    dataB := io.unwrittenData
+  when (!io.wbendInvalidated && io.instruction.registerRs2 === io.wbendRegister && io.wbendRegister > 0.U) {
+    dataB := io.wbendUnwritten
   }
-  io.dataBOut := dataB
+  when (!io.memwbInvalidated && io.instruction.registerRs1 === io.memwbRegister && io.memwbRegister > 0.U) {
+    dataA := io.memwbUnwritten
+  }
+  when (!io.memwbInvalidated && io.instruction.registerRs2 === io.memwbRegister && io.memwbRegister > 0.U) {
+    dataB := io.memwbUnwritten
+  }
+  when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U) {
+    dataA := io.exmemUnwritten
+  }
+  when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U) {
+    dataB := io.exmemUnwritten
+  }
 
   branchCmp.io.op1 := dataA
   branchCmp.io.op2 := dataB

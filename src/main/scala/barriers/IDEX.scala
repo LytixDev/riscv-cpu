@@ -32,15 +32,15 @@ class IDEX extends Module {
     }
   )
 
-  io.instructionOut := io.instructionIn
-  io.PCOut := io.PCIn
-  io.PCNextOut := io.PCNextIn
-  io.dataAOut := io.dataAIn
-  io.dataBOut := io.dataBIn
-  io.immOut := io.immIn
-  io.controlSignalsOut := io.controlSignalsIn
-  io.ALUopOut := io.ALUopIn
-  io.branchTypeOut := io.branchTypeIn
-  io.op1SelectOut := io.op1SelectIn
-  io.op2SelectOut := io.op2SelectIn
+  io.instructionOut := RegNext(io.instructionIn)
+  io.PCOut := RegNext(io.PCIn)
+  io.PCNextOut := RegNext(io.PCNextIn)
+  io.dataAOut := RegNext(io.dataAIn)
+  io.dataBOut := RegNext(io.dataBIn)
+  io.immOut := RegNext(io.immIn)
+  io.controlSignalsOut := RegNext(io.controlSignalsIn)
+  io.ALUopOut := RegNext(io.ALUopIn)
+  io.branchTypeOut := RegNext(io.branchTypeIn)
+  io.op1SelectOut := RegNext(io.op1SelectIn)
+  io.op2SelectOut := RegNext(io.op2SelectIn)
 }
