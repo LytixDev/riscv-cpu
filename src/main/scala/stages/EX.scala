@@ -23,6 +23,7 @@ class Execute extends MultiIOModule {
       val exmemRegister = Input(UInt(5.W)) // The register with unwritten data
       val exmemUnwritten = Input(UInt(32.W))
       val exmemInvalidated = Input(Bool())
+      val exmemIsLoad = Input(Bool())
       // Forward from MEMWB
       val memwbRegister = Input(UInt(5.W))
       val memwbUnwritten = Input(UInt(32.W))
@@ -36,6 +37,7 @@ class Execute extends MultiIOModule {
       val dataBOut = Output(UInt(32.W)) // If dataB is stale we update it here and need to propagate that
       val branchMispredict = Output(Bool())
       val branchTaken = Output(Bool())
+      val issueFreeze = Output(Bool())
     }
   )
 
@@ -47,6 +49,8 @@ class Execute extends MultiIOModule {
   dataA := io.dataA
   dataB := io.dataB
   io.dataBOut := dataB
+
+  io.issueFreeze := false.B
 
   // Logic for choosing the correct forwarded values.
   // NOTE: Zero register should always be zero. Instructions that don't write will get registerRd of 0,
@@ -66,9 +70,15 @@ class Execute extends MultiIOModule {
     dataB := io.memwbUnwritten
   }
   when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U) {
+    when (io.exmemIsLoad) {
+      io.issueFreeze := true.B
+    }
     dataA := io.exmemUnwritten
   }
   when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U) {
+    when (io.exmemIsLoad) {
+      io.issueFreeze := true.B
+    }
     dataB := io.exmemUnwritten
   }
 
