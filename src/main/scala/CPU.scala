@@ -100,16 +100,14 @@ class CPU extends MultiIOModule {
   EX.io.controlSignals := IDEX.controlSignalsOut
   EX.io.ALUop := IDEX.ALUopOut
   EX.io.branchType := IDEX.branchTypeOut
+  // Freeze signals
+  IF.io.freeze := EX.io.issueFreeze
+  IFID.freeze := EX.io.issueFreeze
+  IDEX.freeze := EX.io.issueFreeze
+  EXMEM.freeze := EX.io.issueFreeze
+  MEMWB.freeze := EX.io.issueFreeze
+  WBEND.freeze := EX.io.issueFreeze
 
-  // EXMEM Barrier
-  EXMEM.PCIn := IDEX.PCOut
-  EXMEM.instructionIn := IDEX.instructionOut
-  EXMEM.dataBIn := EX.io.dataBOut
-  EXMEM.controlSignalsIn := IDEX.controlSignalsOut
-  EXMEM.dataAluIn := EX.io.aluResult
-  // If instruction in MEMWB was taken, the current one in execute is invalid, and if it was a branch, we must ignore its side effect
-  EXMEM.branchMispredictIn := EX.io.branchMispredict && !EXMEM.invalidatedIn
-  EXMEM.branchtakenIn := EX.io.branchTaken && !EXMEM.invalidatedIn
   // Instruction Fetch Extra
   // For branches and jumps that are mispredicted, signal to the IF to use the incoming newPC
   IF.io.useNewPCControl := EXMEM.branchMispredictOut
@@ -120,6 +118,16 @@ class CPU extends MultiIOModule {
   IF.io.addressThatGeneratedNewPC := EXMEM.PCOut
   IF.io.updatePredictor := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
   IF.io.wasTaken := EXMEM.branchtakenOut
+
+  // EXMEM Barrier
+  EXMEM.PCIn := IDEX.PCOut
+  EXMEM.instructionIn := IDEX.instructionOut
+  EXMEM.dataBIn := EX.io.dataBOut
+  EXMEM.controlSignalsIn := IDEX.controlSignalsOut
+  EXMEM.dataAluIn := EX.io.aluResult
+  // If instruction in MEMWB was taken, the current one in execute is invalid, and if it was a branch, we must ignore its side effect
+  EXMEM.branchMispredictIn := EX.io.branchMispredict && !EXMEM.invalidatedIn
+  EXMEM.branchtakenIn := EX.io.branchTaken && !EXMEM.invalidatedIn
 
   // Memory Stage
   MEM.io.dataAddress := EXMEM.dataAluOut
@@ -137,7 +145,7 @@ class CPU extends MultiIOModule {
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
   MEMWB.dataAluIn := EXMEM.dataAluOut
   MEMWB.branchMispredictIn := EXMEM.branchMispredictOut
-  MEMWB.invalidatedIn := EXMEM.invalidatedOut
+  MEMWB.invalidatedIn := EXMEM.invalidatedOut || EX.io.prevIssuedFreeze
   // For jump instructions, the alu result is used to update the new PC, while the
   // data we actually want to write to the given register is the old PC + 4.
   when (EXMEM.controlSignalsOut.jump) {
@@ -170,6 +178,7 @@ class CPU extends MultiIOModule {
   EX.io.exmemRegister := EXMEM.instructionOut.registerRd
   EX.io.exmemInvalidated := EXMEM.invalidatedOut
   EX.io.exmemUnwritten := EXMEM.dataAluOut
+  EX.io.exmemIsLoad := EXMEM.controlSignalsOut.memRead
   // NOTE: Store instructions use registerRd to hold the memory address
   when (EXMEM.controlSignalsOut.memWrite) {
     EX.io.exmemRegister := 0.U // Zero register forwards are ignored

@@ -38,6 +38,7 @@ class Execute extends MultiIOModule {
       val branchMispredict = Output(Bool())
       val branchTaken = Output(Bool())
       val issueFreeze = Output(Bool())
+      val prevIssuedFreeze = Output(Bool())
     }
   )
 
@@ -50,7 +51,9 @@ class Execute extends MultiIOModule {
   dataB := io.dataB
   io.dataBOut := dataB
 
+  val prevIssuedFreeze = RegInit(false.B)
   io.issueFreeze := false.B
+  io.prevIssuedFreeze := prevIssuedFreeze
 
   // Logic for choosing the correct forwarded values.
   // NOTE: Zero register should always be zero. Instructions that don't write will get registerRd of 0,
@@ -69,17 +72,23 @@ class Execute extends MultiIOModule {
   when (!io.memwbInvalidated && io.instruction.registerRs2 === io.memwbRegister && io.memwbRegister > 0.U) {
     dataB := io.memwbUnwritten
   }
-  when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U) {
-    when (io.exmemIsLoad) {
+  when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U && !prevIssuedFreeze) {
+    when (io.exmemIsLoad && !prevIssuedFreeze) {
       io.issueFreeze := true.B
+      prevIssuedFreeze := true.B
     }
     dataA := io.exmemUnwritten
   }
-  when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U) {
-    when (io.exmemIsLoad) {
+  when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U && !prevIssuedFreeze) {
+    when (io.exmemIsLoad && !prevIssuedFreeze) {
       io.issueFreeze := true.B
+      prevIssuedFreeze := true.B
     }
     dataB := io.exmemUnwritten
+  }
+  // Reset `prevIssuedFreeze` if no freeze is issued in the current cycle
+  when (!io.issueFreeze) {
+    prevIssuedFreeze := false.B
   }
 
   branchCmp.io.op1 := dataA

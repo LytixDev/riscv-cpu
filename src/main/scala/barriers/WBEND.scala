@@ -2,30 +2,29 @@ package barriers
 import FiveStage.{ControlSignals, Instruction}
 import chisel3._
 
-/*
-  EX.io.exmemRegister := EXMEM.instructionOut.registerRd
-  EX.io.exmemInvalidated := EXMEM.invalidatedOut
-  EX.io.exmemUnwritten := EXMEM.dataAluOut
-  // NOTE: Store instructions use registerRd to hold the memory address
-  when (EXMEM.controlSignalsOut.memWrite) {
-    EX.io.exmemRegister := 0.U // Zero register forwards are ignored
- */
-
 class WBEND extends Module {
 
   val io = IO(
-    new Bundle{
+    new Bundle {
       val registerIn = Input(UInt(5.W))
       val dataUnwrittenIn = Input(UInt(32.W))
       val invalidatedIn = Input(Bool())
+      val freeze = Input(Bool())
 
       val registerOut = Output(UInt(5.W))
       val dataUnwrittenOut = Output(UInt(32.W))
       val invalidatedOut = Output(Bool())
     }
   )
+  val registerReg = RegInit(0.U(5.W))
+  val dataUnwrittenReg = RegInit(0.U(32.W))
+  val invalidatedReg = RegInit(false.B)
 
-  io.registerOut := RegNext(io.registerIn)
-  io.dataUnwrittenOut := RegNext(io.dataUnwrittenIn)
-  io.invalidatedOut := RegNext(io.invalidatedIn)
+  registerReg := Mux(io.freeze, registerReg, io.registerIn)
+  dataUnwrittenReg := Mux(io.freeze, dataUnwrittenReg, io.dataUnwrittenIn)
+  invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
+
+  io.registerOut := registerReg
+  io.dataUnwrittenOut := dataUnwrittenReg
+  io.invalidatedOut := invalidatedReg
 }

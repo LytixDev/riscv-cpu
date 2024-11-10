@@ -5,7 +5,7 @@ import chisel3._
 class EXMEM extends Module {
 
   val io = IO(
-    new Bundle{
+    new Bundle {
       val PCIn = Input(UInt())
       val instructionIn = Input(new Instruction)
       val dataBIn = Input(UInt(32.W))
@@ -14,6 +14,7 @@ class EXMEM extends Module {
       val branchMispredictIn = Input(Bool())
       val branchtakenIn = Input(Bool())
       val invalidatedIn = Input(Bool())
+      val freeze = Input(Bool()) // New input for freeze signal
 
       val PCOut = Output(UInt())
       val instructionOut = Output(new Instruction)
@@ -26,12 +27,33 @@ class EXMEM extends Module {
     }
   )
 
-  io.PCOut := RegNext(io.PCIn)
-  io.dataBOut := RegNext(io.dataBIn)
-  io.dataAluOut := RegNext(io.dataAluIn)
-  io.instructionOut := RegNext(io.instructionIn)
-  io.controlSignalsOut := RegNext(io.controlSignalsIn)
-  io.branchMispredictOut := RegNext(io.branchMispredictIn)
-  io.branchtakenOut := RegNext(io.branchtakenIn)
-  io.invalidatedOut := RegNext(io.invalidatedIn)
+  // Register definitions with freeze logic using Mux
+  val PCReg = RegInit(0.U)
+  val instructionReg = RegInit(0.U.asTypeOf(new Instruction))
+  val dataBReg = RegInit(0.U(32.W))
+  val dataAluReg = RegInit(0.U(32.W))
+  val controlSignalsReg = RegInit(0.U.asTypeOf(new ControlSignals))
+  val branchMispredictReg = RegInit(false.B)
+  val branchtakenReg = RegInit(false.B)
+  val invalidatedReg = RegInit(false.B)
+
+  // Update logic with freeze functionality
+  PCReg := Mux(io.freeze, PCReg, io.PCIn)
+  instructionReg := Mux(io.freeze, instructionReg, io.instructionIn)
+  dataBReg := Mux(io.freeze, dataBReg, io.dataBIn)
+  dataAluReg := Mux(io.freeze, dataAluReg, io.dataAluIn)
+  controlSignalsReg := Mux(io.freeze, controlSignalsReg, io.controlSignalsIn)
+  branchMispredictReg := Mux(io.freeze, branchMispredictReg, io.branchMispredictIn)
+  branchtakenReg := Mux(io.freeze, branchtakenReg, io.branchtakenIn)
+  invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
+
+  // Outputs
+  io.PCOut := PCReg
+  io.instructionOut := instructionReg
+  io.dataBOut := dataBReg
+  io.dataAluOut := dataAluReg
+  io.controlSignalsOut := controlSignalsReg
+  io.branchMispredictOut := branchMispredictReg
+  io.branchtakenOut := branchtakenReg
+  io.invalidatedOut := invalidatedReg
 }

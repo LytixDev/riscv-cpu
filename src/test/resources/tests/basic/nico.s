@@ -1,10 +1,13 @@
 main:
-	lw x1, 0(x1)
-	addi x1, x1, 1
-	done
-#regset x1, 0x04
-#memset 0x0,  4
-#memset 0x4,  8
-#memset 0x8,  12
-#memset 0xc,  16
-#memset 0x10, 20
+ addi t0, zero, 3
+ addi t1, zero, 1
+ j .L1
+ addi t1, zero, 2
+ addi t2, zero, 2
+ addi t3, zero, 2
+ nop
+ nop
+.L1:
+ add t0, t1, t2
+ done
+

@@ -5,7 +5,7 @@ import chisel3._
 
 class IDEX extends Module {
   val io = IO(
-    new Bundle{
+    new Bundle {
       val instructionIn = Input(new Instruction)
       val PCIn = Input(UInt(32.W))
       val PCNextIn = Input(UInt(32.W))
@@ -17,6 +17,7 @@ class IDEX extends Module {
       val branchTypeIn = Input(UInt(3.W))
       val op1SelectIn = Input(UInt(1.W))
       val op2SelectIn = Input(UInt(1.W))
+      val freeze = Input(Bool())
 
       val instructionOut = Output(new Instruction)
       val PCOut = Output(UInt(32.W))
@@ -32,15 +33,39 @@ class IDEX extends Module {
     }
   )
 
-  io.instructionOut := RegNext(io.instructionIn)
-  io.PCOut := RegNext(io.PCIn)
-  io.PCNextOut := RegNext(io.PCNextIn)
-  io.dataAOut := RegNext(io.dataAIn)
-  io.dataBOut := RegNext(io.dataBIn)
-  io.immOut := RegNext(io.immIn)
-  io.controlSignalsOut := RegNext(io.controlSignalsIn)
-  io.ALUopOut := RegNext(io.ALUopIn)
-  io.branchTypeOut := RegNext(io.branchTypeIn)
-  io.op1SelectOut := RegNext(io.op1SelectIn)
-  io.op2SelectOut := RegNext(io.op2SelectIn)
+  val instructionReg = RegInit(0.U.asTypeOf(new Instruction))
+  val PCReg = RegInit(0.U(32.W))
+  val PCNextReg = RegInit(0.U(32.W))
+  val dataAReg = RegInit(0.U(32.W))
+  val dataBReg = RegInit(0.U(32.W))
+  val immReg = RegInit(0.U(32.W))
+  val controlSignalsReg = RegInit(0.U.asTypeOf(new ControlSignals))
+  val ALUopReg = RegInit(0.U(4.W))
+  val branchTypeReg = RegInit(0.U(3.W))
+  val op1SelectReg = RegInit(0.U(1.W))
+  val op2SelectReg = RegInit(0.U(1.W))
+
+  instructionReg := Mux(io.freeze, instructionReg, io.instructionIn)
+  PCReg := Mux(io.freeze, PCReg, io.PCIn)
+  PCNextReg := Mux(io.freeze, PCNextReg, io.PCNextIn)
+  dataAReg := Mux(io.freeze, dataAReg, io.dataAIn)
+  dataBReg := Mux(io.freeze, dataBReg, io.dataBIn)
+  immReg := Mux(io.freeze, immReg, io.immIn)
+  controlSignalsReg := Mux(io.freeze, controlSignalsReg, io.controlSignalsIn)
+  ALUopReg := Mux(io.freeze, ALUopReg, io.ALUopIn)
+  branchTypeReg := Mux(io.freeze, branchTypeReg, io.branchTypeIn)
+  op1SelectReg := Mux(io.freeze, op1SelectReg, io.op1SelectIn)
+  op2SelectReg := Mux(io.freeze, op2SelectReg, io.op2SelectIn)
+
+  io.instructionOut := instructionReg
+  io.PCOut := PCReg
+  io.PCNextOut := PCNextReg
+  io.dataAOut := dataAReg
+  io.dataBOut := dataBReg
+  io.immOut := immReg
+  io.controlSignalsOut := controlSignalsReg
+  io.ALUopOut := ALUopReg
+  io.branchTypeOut := branchTypeReg
+  io.op1SelectOut := op1SelectReg
+  io.op2SelectOut := op2SelectReg
 }
