@@ -107,17 +107,19 @@ class CPU extends MultiIOModule {
   EXMEM.freeze := EX.io.issueFreeze
   MEMWB.freeze := EX.io.issueFreeze
   WBEND.freeze := EX.io.issueFreeze
-
-  // Instruction Fetch Extra
-  // For branches and jumps that are mispredicted, signal to the IF to use the incoming newPC
-  IF.io.useNewPCControl := EXMEM.branchMispredictOut
-  IF.io.newPC := EXMEM.dataAluOut
+  // Handle branch mispredicts
+  // Send signal to IFID and IDEX that speculatively fetched branch was wrong
+  IFID.invalidatedIn := EX.io.branchMispredict && !IDEX.invalidatedOut
+  IDEX.invalidatedIn := (EX.io.branchMispredict && !IDEX.invalidatedOut) || IFID.invalidatedOut
+  // Signal to the IF to use the incoming newPC
+  IF.io.useNewPCControl := EX.io.branchMispredict && !IDEX.invalidatedOut
+  IF.io.newPC := EX.io.aluResult
   // We only update a BTB entry when we mispredict a branch address which is actually taken
   // When we mispredict a branch address that is not taken, it is uninteresting to fill the BTB with PC + 4.
-  IF.io.updateBTB := EXMEM.branchMispredictOut && EXMEM.branchtakenOut
-  IF.io.addressThatGeneratedNewPC := EXMEM.PCOut
-  IF.io.updatePredictor := EXMEM.controlSignalsOut.jump || EXMEM.controlSignalsOut.branch
-  IF.io.wasTaken := EXMEM.branchtakenOut
+  IF.io.updateBTB := EX.io.branchTaken && (EX.io.branchMispredict && !IDEX.invalidatedOut) //EXMEM.branchMispredictOut && EXMEM.branchtakenOut
+  IF.io.addressThatGeneratedNewPC := IDEX.PCOut
+  IF.io.updatePredictor := IDEX.controlSignalsOut.jump || IDEX.controlSignalsOut.branch
+  IF.io.wasTaken := EX.io.branchTaken
 
   // EXMEM Barrier
   EXMEM.PCIn := IDEX.PCOut
@@ -125,9 +127,9 @@ class CPU extends MultiIOModule {
   EXMEM.dataBIn := EX.io.dataBOut
   EXMEM.controlSignalsIn := IDEX.controlSignalsOut
   EXMEM.dataAluIn := EX.io.aluResult
-  // If instruction in MEMWB was taken, the current one in execute is invalid, and if it was a branch, we must ignore its side effect
-  EXMEM.branchMispredictIn := EX.io.branchMispredict && !EXMEM.invalidatedIn
-  EXMEM.branchtakenIn := EX.io.branchTaken && !EXMEM.invalidatedIn
+  EXMEM.invalidatedIn := IDEX.invalidatedOut // || EX.io.branchMispredict
+  EXMEM.branchMispredictIn := EX.io.branchMispredict
+  EXMEM.branchtakenIn := EX.io.branchTaken && !IDEX.invalidatedOut
 
   // Memory Stage
   MEM.io.dataAddress := EXMEM.dataAluOut
@@ -139,7 +141,6 @@ class CPU extends MultiIOModule {
 
   // MEMWB Barrier
   // If instruction in MEMWB barrier was taken, then we need to invalidate current instruction in EXMEM barrier
-  EXMEM.invalidatedIn := MEMWB.branchMispredictOut
   MEMWB.memReadIn := MEM.io.dataOut // What we read from memory
   MEMWB.instructionIn := EXMEM.instructionOut
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut

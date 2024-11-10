@@ -17,6 +17,7 @@ class IDEX extends Module {
       val branchTypeIn = Input(UInt(3.W))
       val op1SelectIn = Input(UInt(1.W))
       val op2SelectIn = Input(UInt(1.W))
+      val invalidatedIn = Input(Bool())
       val freeze = Input(Bool())
 
       val instructionOut = Output(new Instruction)
@@ -30,6 +31,7 @@ class IDEX extends Module {
       val branchTypeOut = Output(UInt(3.W))
       val op1SelectOut = Output(UInt(1.W))
       val op2SelectOut = Output(UInt(1.W))
+      val invalidatedOut = Output(Bool())
     }
   )
 
@@ -44,6 +46,7 @@ class IDEX extends Module {
   val branchTypeReg = RegInit(0.U(3.W))
   val op1SelectReg = RegInit(0.U(1.W))
   val op2SelectReg = RegInit(0.U(1.W))
+  val invalidatedReg = RegInit(false.B)
 
   instructionReg := Mux(io.freeze, instructionReg, io.instructionIn)
   PCReg := Mux(io.freeze, PCReg, io.PCIn)
@@ -56,6 +59,7 @@ class IDEX extends Module {
   branchTypeReg := Mux(io.freeze, branchTypeReg, io.branchTypeIn)
   op1SelectReg := Mux(io.freeze, op1SelectReg, io.op1SelectIn)
   op2SelectReg := Mux(io.freeze, op2SelectReg, io.op2SelectIn)
+  invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
 
   io.instructionOut := instructionReg
   io.PCOut := PCReg
@@ -68,4 +72,5 @@ class IDEX extends Module {
   io.branchTypeOut := branchTypeReg
   io.op1SelectOut := op1SelectReg
   io.op2SelectOut := op2SelectReg
+  io.invalidatedOut := invalidatedReg
 }

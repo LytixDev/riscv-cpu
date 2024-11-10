@@ -19,12 +19,31 @@ class WBEND extends Module {
   val registerReg = RegInit(0.U(5.W))
   val dataUnwrittenReg = RegInit(0.U(32.W))
   val invalidatedReg = RegInit(false.B)
+  val prevWasFreeze = RegInit(false.B)
+  prevWasFreeze := false.B
+  when (io.freeze) {
+    prevWasFreeze := true.B
+  }
 
-  registerReg := Mux(io.freeze, registerReg, io.registerIn)
-  dataUnwrittenReg := Mux(io.freeze, dataUnwrittenReg, io.dataUnwrittenIn)
-  invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
+  registerReg := io.registerIn
+  dataUnwrittenReg := io.dataUnwrittenIn
+  invalidatedReg := io.invalidatedIn
+
+  // when () {
+  //   registerReg := io.registerIn
+  //   dataUnwrittenReg := io.dataUnwrittenIn
+  //   invalidatedReg := io.invalidatedIn
+  // }
+
+//  registerReg := Mux(io.freeze, registerReg, io.registerIn)
+//  dataUnwrittenReg := Mux(io.freeze, dataUnwrittenReg, io.dataUnwrittenIn)
+//  invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
 
   io.registerOut := registerReg
   io.dataUnwrittenOut := dataUnwrittenReg
   io.invalidatedOut := invalidatedReg
+
+  //io.registerOut := io.registerIn
+  //io.dataUnwrittenOut := io.dataUnwrittenIn
+  //io.invalidatedOut := io.invalidatedIn
 }
