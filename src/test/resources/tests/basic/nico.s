@@ -3,6 +3,7 @@ main:
 	addi x2, zero, 4
 	lw	x2,0(x1)
 	sw	x2,0(x1)
+	addi x3, x2, 1
     nop
     done
 

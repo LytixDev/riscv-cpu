@@ -25,12 +25,12 @@ class WBEND extends Module {
     prevWasFreeze := true.B
   }
 
-  // TODO
-  when (!io.freeze) {
-    registerReg := io.registerIn
-    dataUnwrittenReg := io.dataUnwrittenIn
-    invalidatedReg := io.invalidatedIn
-  }
+  // TODO: this fixes one issue, but creates anothert
+  //when (!io.freeze) {
+  registerReg := io.registerIn
+  dataUnwrittenReg := io.dataUnwrittenIn
+  invalidatedReg := io.invalidatedIn
+  //}
 
   io.registerOut := registerReg
   io.dataUnwrittenOut := dataUnwrittenReg
