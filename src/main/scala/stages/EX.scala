@@ -72,14 +72,14 @@ class Execute extends MultiIOModule {
   when (!io.memwbInvalidated && io.instruction.registerRs2 === io.memwbRegister && io.memwbRegister > 0.U) {
     dataB := io.memwbUnwritten
   }
-  when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U && !prevIssuedFreeze) {
+  when (!io.exmemInvalidated && io.instruction.registerRs1 === io.exmemRegister && io.exmemRegister > 0.U) {
     when (io.exmemIsLoad && !prevIssuedFreeze) {
       io.issueFreeze := true.B
       prevIssuedFreeze := true.B
     }
     dataA := io.exmemUnwritten
   }
-  when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U && !prevIssuedFreeze) {
+  when (!io.exmemInvalidated && io.instruction.registerRs2 === io.exmemRegister && io.exmemRegister > 0.U) {
     when (io.exmemIsLoad && !prevIssuedFreeze) {
       io.issueFreeze := true.B
       prevIssuedFreeze := true.B

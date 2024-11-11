@@ -26,11 +26,11 @@ class WBEND extends Module {
   }
 
   // TODO: this fixes one issue, but creates anothert
-  //when (!io.freeze) {
-  registerReg := io.registerIn
-  dataUnwrittenReg := io.dataUnwrittenIn
-  invalidatedReg := io.invalidatedIn
-  //}
+  when (!io.freeze) {
+    registerReg := io.registerIn
+    dataUnwrittenReg := io.dataUnwrittenIn
+    invalidatedReg := io.invalidatedIn
+  }
 
   io.registerOut := registerReg
   io.dataUnwrittenOut := dataUnwrittenReg

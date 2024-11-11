@@ -146,7 +146,7 @@ class CPU extends MultiIOModule {
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
   MEMWB.dataAluIn := EXMEM.dataAluOut
   MEMWB.branchMispredictIn := EXMEM.branchMispredictOut
-  MEMWB.invalidatedIn := EXMEM.invalidatedOut || EX.io.prevIssuedFreeze
+  MEMWB.invalidatedIn := EXMEM.invalidatedOut // EX.io.prevIssuedFreeze
   // For jump instructions, the alu result is used to update the new PC, while the
   // data we actually want to write to the given register is the old PC + 4.
   when (EXMEM.controlSignalsOut.jump) {
@@ -160,7 +160,7 @@ class CPU extends MultiIOModule {
     ID.io.writeData := MEMWB.memReadOut
   }
   // Register write
-  ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite && !MEMWB.invalidatedOut
+  ID.io.writeEnable := MEMWB.controlSignalsOut.regWrite && !MEMWB.invalidatedOut && !EX.io.prevIssuedFreeze
 
   // WBEND Barrier
   WBEND.registerIn := MEMWB.instructionOut.registerRd
@@ -179,6 +179,10 @@ class CPU extends MultiIOModule {
   EX.io.exmemRegister := EXMEM.instructionOut.registerRd
   EX.io.exmemInvalidated := EXMEM.invalidatedOut
   EX.io.exmemUnwritten := EXMEM.dataAluOut
+  when (EX.io.prevIssuedFreeze) {
+    EX.io.exmemUnwritten := MEM.io.dataOut
+  }
+
   EX.io.exmemIsLoad := EXMEM.controlSignalsOut.memRead
   // NOTE: Store instructions use registerRd to hold the memory address
   when (EXMEM.controlSignalsOut.memWrite) {
