@@ -25,7 +25,6 @@ class WBEND extends Module {
     prevWasFreeze := true.B
   }
 
-  // TODO: this fixes one issue, but creates anothert
   when (!io.freeze) {
     registerReg := io.registerIn
     dataUnwrittenReg := io.dataUnwrittenIn

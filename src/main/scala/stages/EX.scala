@@ -111,7 +111,6 @@ class Execute extends MultiIOModule {
 
   io.aluResult := alu.io.aluResult
 
-
   /*
    * Process for detecting a branch mispredict:
    *  If jump or branch is computed taken: ALU result != nextPC => mispredict

@@ -116,7 +116,7 @@ class CPU extends MultiIOModule {
   IF.io.newPC := EX.io.aluResult
   // We only update a BTB entry when we mispredict a branch address which is actually taken
   // When we mispredict a branch address that is not taken, it is uninteresting to fill the BTB with PC + 4.
-  IF.io.updateBTB := EX.io.branchTaken && (EX.io.branchMispredict && !IDEX.invalidatedOut) //EXMEM.branchMispredictOut && EXMEM.branchtakenOut
+  IF.io.updateBTB := EX.io.branchTaken && (EX.io.branchMispredict && !IDEX.invalidatedOut)
   IF.io.addressThatGeneratedNewPC := IDEX.PCOut
   IF.io.updatePredictor := IDEX.controlSignalsOut.jump || IDEX.controlSignalsOut.branch
   IF.io.wasTaken := EX.io.branchTaken
@@ -127,7 +127,7 @@ class CPU extends MultiIOModule {
   EXMEM.dataBIn := EX.io.dataBOut
   EXMEM.controlSignalsIn := IDEX.controlSignalsOut
   EXMEM.dataAluIn := EX.io.aluResult
-  EXMEM.invalidatedIn := IDEX.invalidatedOut // || EX.io.branchMispredict
+  EXMEM.invalidatedIn := IDEX.invalidatedOut
   EXMEM.branchMispredictIn := EX.io.branchMispredict
   EXMEM.branchtakenIn := EX.io.branchTaken && !IDEX.invalidatedOut
 
@@ -146,7 +146,7 @@ class CPU extends MultiIOModule {
   MEMWB.controlSignalsIn := EXMEM.controlSignalsOut
   MEMWB.dataAluIn := EXMEM.dataAluOut
   MEMWB.branchMispredictIn := EXMEM.branchMispredictOut
-  MEMWB.invalidatedIn := EXMEM.invalidatedOut // EX.io.prevIssuedFreeze
+  MEMWB.invalidatedIn := EXMEM.invalidatedOut
   // For jump instructions, the alu result is used to update the new PC, while the
   // data we actually want to write to the given register is the old PC + 4.
   when (EXMEM.controlSignalsOut.jump) {
@@ -167,7 +167,7 @@ class CPU extends MultiIOModule {
   WBEND.dataUnwrittenIn := MEMWB.dataAluOut
   WBEND.invalidatedIn := MEMWB.invalidatedOut
   // NOTE: Store instructions use registerRd to hold the memory address
-  when (MEMWB.controlSignalsOut.memWrite) {
+  when (MEMWB.controlSignalsOut.memWrite || MEMWB.controlSignalsOut.branch) {
     WBEND.registerIn := 0.U // Zero register forwards are ignored
   }
   when (MEMWB.controlSignalsOut.memRead) {
@@ -182,7 +182,6 @@ class CPU extends MultiIOModule {
   when (EX.io.prevIssuedFreeze) {
     EX.io.exmemUnwritten := MEM.io.dataOut
   }
-
   EX.io.exmemIsLoad := EXMEM.controlSignalsOut.memRead
   // NOTE: Store instructions use registerRd to hold the memory address
   when (EXMEM.controlSignalsOut.memWrite) {

@@ -72,26 +72,26 @@ class InstructionFetch extends MultiIOModule {
   }
 
   // Figure out what instruction to fetch next
-  //when (io.freeze) {
-  //  PC := PC // Hold the current PC value during a freeze
-  //} .elsewhen (io.useNewPCControl) {
-  //  PC := io.newPC
-  //} .otherwise {
-  //  when (bimodalPredictor.io.predictTaken && BTB.io.hit) {
-  //    PC := BTB.io.targetAddress
-  //  } .otherwise {
-  //    PC := PC + 4.U
-  //  }
-  //}
-
-  // REMOVEME: turn branch prediction back on
   when (io.freeze) {
     PC := PC // Hold the current PC value during a freeze
   } .elsewhen (io.useNewPCControl) {
     PC := io.newPC
   } .otherwise {
-    PC := PC + 4.U
+    when (bimodalPredictor.io.predictTaken && BTB.io.hit) {
+      PC := BTB.io.targetAddress
+    } .otherwise {
+      PC := PC + 4.U
+    }
   }
+
+  // REMOVEME: turn branch prediction back on
+  // when (io.freeze) {
+  //   PC := PC // Hold the current PC value during a freeze
+  // } .elsewhen (io.useNewPCControl) {
+  //   PC := io.newPC
+  // } .otherwise {
+  //   PC := PC + 4.U
+  // }
 
   IMEM.io.instructionAddress := PC
 

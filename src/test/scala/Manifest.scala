@@ -29,7 +29,7 @@ object Manifest {
     printParsedProgram = false,
     printVMtrace       = false,
     printVMfinal       = false,
-    printMergedTrace   = true,
+    printMergedTrace   = false,
     printBinary        = false,
     nopPadded          = nopPadded,
     breakPoints        = Nil, // not implemented

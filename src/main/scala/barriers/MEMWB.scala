@@ -42,15 +42,8 @@ class MEMWB extends Module {
   invalidatedReg := Mux(io.freeze, invalidatedReg, io.invalidatedIn)
   memReadReg := io.memReadIn
 
-  //instructionReg := io.instructionIn
-  //dataAluReg := io.dataAluIn
-  //controlSignalsReg := io.controlSignalsIn
-  //branchMispredictReg := io.branchMispredictIn
-  //invalidatedReg := io.invalidatedIn
-
-  // Direct output for memReadOut, as it doesn't need to be held during freeze
+  // When not in a freeze, the memory must be fed directly through as reading takes one cycle
   io.memReadOut := io.memReadIn
-
   when (prevWasFreeze) {
     io.memReadOut := memReadReg
   }
